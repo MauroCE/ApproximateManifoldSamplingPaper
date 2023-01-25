@@ -5,7 +5,7 @@ import scipy.linalg as la
 
 
 def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2):
-    """C-RWM Rattle. This was used in G and K experiment."""
+    """C-RWM with Rattle integration."""
     assert type(B) == int
     assert norm_ord in [2, inf]
     assert len(x0) == manifold.n, "Initial point has wrong dimension."
@@ -109,7 +109,7 @@ def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_to
 
 def project_zappa_manifold(manifold, z, Q, tol = 1.48e-08 , maxiter = 50, norm_ord=2):
     '''
-    USED IN G AND K. This version is the version of Miranda & Zappa. It retuns i, the number of iterations
+    This version is the version of Miranda & Zappa. It retuns i, the number of iterations
     i.e. the number of gradient evaluations used.
     '''
     a, flag, i = zeros(Q.shape[1]), 1, 0
