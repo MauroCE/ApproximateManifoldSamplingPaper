@@ -8,7 +8,7 @@ This file contains various classes relating to Manifolds.
 """
 import math
 import numpy as np
-from numpy import log, pi, zeros, eye, ones, exp, sqrt, diag, apply_along_axis, concatenate, vstack
+from numpy import log, pi, zeros, eye, ones, exp, sqrt, diag, apply_along_axis, concatenate, vstack, isfinite
 from numpy.random import default_rng, randn
 from numpy.linalg import svd, inv, det, norm
 from scipy.optimize import fsolve
@@ -440,3 +440,24 @@ class GKManifold(Manifold):
         """Checks if ξ is on the ystar manifold."""
         return np.max(abs(self.q(ξ))) < tol
     
+    def find_point_on_manifold_from_θ(self, θfixed, ϵ, maxiter=2000, tol=1.49012e-08):
+        """Same as the above but we provide the θfixed. Can be used to find a point where
+        the theta is already θ0."""
+        i = 0
+        log_abc_posterior = self.generate_logηϵ(ϵ)
+        function = lambda z: self._q_raw_normal(concatenate((θfixed, z)))
+        with catch_warnings():
+            filterwarnings('error')
+            while i <= maxiter:
+                i += 1
+                try:
+                    z_guess  = randn(self.m)
+                    z_found  = fsolve(function, z_guess, xtol=tol)
+                    ξ_found  = concatenate((θfixed, z_found))
+                    if not isfinite([log_abc_posterior(ξ_found)]):
+                        raise ValueError("Couldn't find a point.")
+                    else:
+                        return ξ_found
+                except RuntimeWarning:
+                    continue
+            raise ValueError("Couldn't find a point, try again.")
