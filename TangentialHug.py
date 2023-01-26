@@ -5,7 +5,7 @@ from scipy.linalg import qr, lstsq
 from warnings import catch_warnings, filterwarnings
 
 
-def HugTangentialMultivariate(x0, T, B, N, α, q, logpi, jac, method='qr', return_n_grad=False):
+def THUG(x0, T, B, N, α, q, logpi, jac, method='qr', return_n_grad=False):
     """Multidimensional Tangential Hug sampler. Two possible methods:
     - 'qr': projects onto row space of Jacobian using QR decomposition.
     - 'linear': solves a linear system to project.
