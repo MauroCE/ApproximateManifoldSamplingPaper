@@ -154,8 +154,39 @@ def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, seed=1234)
 
 def projectCRWM(manifold, z, Q, tol = 1.48e-08 , maxiter = 50, norm_ord=2):
     '''
-    This version is the version of Miranda & Zappa. It retuns i, the number of iterations
-    i.e. the number of gradient evaluations used.
+    This version is the version of Miranda & Zappa. It also appears in Graham's papers.
+    It retuns i, the number of iterations i.e. the number of gradient evaluations used.
+
+    Arguments: 
+
+    :param manifold: Instance of the class `Manifold`.
+    :type manifold: `Manifolds.Manifold`
+
+    :param z: Point on the tangent space that needs to be projected back to the manifold. Corresponds to `x+v`.
+    :type z: ndarray
+
+    :param Q: Transpose of Jacobian matrix at the original point `x`. Used to project the point back to the manifold.
+    :type Q: ndarray
+
+    :param tol: Tolerance used to check convergence onto manifold.
+    :type tol: float
+
+    :param maxiter: Maximum number of iterations allowed to try and project `z` onto manifold. 
+    :type maxiter: int
+
+    :param norm_ord: Order of the norm used to check convergence. Can be either `2` or `np.inf`.
+    :type norm_ord: float
+
+    Returns: 
+
+    :param a: Value `a` such that `z - Q@a` lies on the manifold within tolerance `tol`.
+    :type a: ndarray
+
+    :param flag: Flag (either `0` or `1`) determining whehter projection was successful (`1`) or not (`0`).
+    :type flag: int
+
+    :param i: Number of iterations used to project (or not) `z` onto the manifold.
+    :type i: int
     '''
     a, flag, i = zeros(Q.shape[1]), 1, 0
 
