@@ -54,21 +54,21 @@ MARKEREDGEWIDTH = 1.5
 CRWM_LINEWIDTH=2
 fig, ax = plt.subplots(figsize=(16, 8))
 # α = 0.0
-ax.plot(EPSILONS, show_only_positive_ap(THUG00_CC, THUG00_AP, 0), label='1T', marker='o', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
-ax.plot(EPSILONS, show_only_positive_ap(THUG00_CC, THUG00_AP, 1), label='10T', marker='o', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
-ax.plot(EPSILONS, show_only_positive_ap(THUG00_CC, THUG00_AP, 2), label='50T', marker='o', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG00_CC_50, THUG00_AP_50, 0), label='1T', marker='o', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG00_CC_50, THUG00_AP_50, 1), label='10T', marker='o', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG00_CC_50, THUG00_AP_50, 2), label='50T', marker='o', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 # α = 0.9
-ax.plot(EPSILONS, show_only_positive_ap(THUG09_CC, THUG09_AP, 0), label='1α', marker='*', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
-ax.plot(EPSILONS, show_only_positive_ap(THUG09_CC, THUG09_AP, 1), label='10α', marker='*', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
-ax.plot(EPSILONS, show_only_positive_ap(THUG09_CC, THUG09_AP, 2), label='50α', marker='*', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG09_CC_50, THUG09_AP_50, 0), label='1α', marker='*', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG09_CC_50, THUG09_AP_50, 1), label='10α', marker='*', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG09_CC_50, THUG09_AP_50, 2), label='50α', marker='*', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 # α = 0.99
-ax.plot(EPSILONS, show_only_positive_ap(THUG99_CC, THUG99_AP, 0), label='1α2', marker='^', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
-ax.plot(EPSILONS, show_only_positive_ap(THUG99_CC, THUG99_AP, 1), label='10α2', marker='^', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
-ax.plot(EPSILONS, show_only_positive_ap(THUG99_CC, THUG99_AP, 2), label='100α2', marker='^', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG99_CC_50, THUG99_AP_50, 0), label='1α2', marker='^', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG99_CC_50, THUG99_AP_50, 1), label='10α2', marker='^', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap(THUG99_CC_50, THUG99_AP_50, 2), label='100α2', marker='^', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 # CRWM
-ax.plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC, CRWM_AP, EPSILONS, 0), label='1C', color='lightgray', lw=CRWM_LINEWIDTH)
-ax.plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC, CRWM_AP, EPSILONS, 1), label='10C', color='darkgrey', lw=CRWM_LINEWIDTH)
-ax.plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC, CRWM_AP, EPSILONS, 2), label='50C', color='dimgrey', lw=CRWM_LINEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 0), label='1C', color='lightgray', lw=CRWM_LINEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 1), label='10C', color='darkgrey', lw=CRWM_LINEWIDTH)
+ax.plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 2), label='50C', color='dimgrey', lw=CRWM_LINEWIDTH)
 # Set xticks
 ax.set_xticks(EPSILONS)
 # Set labels
