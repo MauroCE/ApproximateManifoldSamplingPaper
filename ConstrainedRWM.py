@@ -1,10 +1,10 @@
 from numpy import inf, zeros, log, finfo
-from numpy.random import rand, randn
+from numpy.random import default_rng
 from numpy.linalg import solve, norm, cond
 import scipy.linalg as la
 
 
-def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2):
+def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, seed=1234):
     """C-RWM with Rattle integration."""
     assert type(B) == int
     assert norm_ord in [2, inf]
@@ -14,10 +14,12 @@ def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_to
     B = int(B)
     δ = T / B
     d, m = manifold.get_dimension(), manifold.get_codimension()
+    # Set random number generator
+    rng = default_rng(seed=seed)
 
     # Initial point on the manifold
     x = x0
-    compute_J = lambda x: manifold.J(x) #manifold.Q(x).T
+    compute_J = lambda x: manifold.fullJacobian(x)
 
     # House-keeping
     samples = zeros((n, d + m))    # Store n samples on the manifold
@@ -28,13 +30,13 @@ def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_to
     # Define function to compute density
     def logη(x):
         """Computes log density on Manifold but makes sure everything is behaving nicely."""
-        return manifold.logη(x) #manifold.logpost(x)
+        return manifold.logη(x)
 
     # Log-uniforms for MH accept-reject step
-    logu = log(rand(n))
+    logu = log(rng.uniform(low=0.0, high=1.0, size=n))
 
     # Compute jacobian & density value
-    Jx    = compute_J(x) #manifold.Q(x).T
+    Jx    = compute_J(x)
     logηx = logη(x)
     N_EVALS['jacobian'] += 1
     N_EVALS['density'] += 1
@@ -42,7 +44,6 @@ def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_to
     def linear_project(v, J):
         """Projects by solving linear system."""
         return J.T @ solve(J@J.T, J@v)
-        #return J.T.dot(solve(J.dot(J.T), J.dot(v)))
 
     # Constrained Step Function
     def constrained_rwm_step(x, v, tol, maxiter, Jx, norm_ord=norm_ord):
@@ -52,7 +53,7 @@ def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_to
         # Unconstrained position step
         x_unconstr = x + v_projected
         # Position Projection
-        a, flag, n_grad = project_zappa_manifold(manifold, x_unconstr, Jx.T, tol, maxiter, norm_ord=norm_ord)
+        a, flag, n_grad = projectCRWM(manifold, x_unconstr, Jx.T, tol, maxiter, norm_ord=norm_ord)
         y = x_unconstr - Jx.T @ a 
         try:
             Jy = compute_J(y) 
@@ -85,7 +86,7 @@ def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_to
         return x, v, J, successful, n_jacobian_evaluations
 
     for i in range(n):
-        v = δ*randn(m + d) # Sample in the ambient space.
+        v = rng.normal(loc=0.0, scale=δ, size=(m+d)) # Sample in the ambient space.
         xp, vp, Jp, LEAPFROG_SUCCESSFUL, n_jac_evals = constrained_leapfrog(x, v, Jx, B, tol=tol, rev_tol=rev_tol, maxiter=maxiter)
         N_EVALS['jacobian'] += n_jac_evals
         if LEAPFROG_SUCCESSFUL:
@@ -107,7 +108,7 @@ def zappa_sampling_storecomps_rattle_manifold(x0, manifold, n, T, B, tol, rev_to
     return samples, N_EVALS, ACCEPTED
 
 
-def project_zappa_manifold(manifold, z, Q, tol = 1.48e-08 , maxiter = 50, norm_ord=2):
+def projectCRWM(manifold, z, Q, tol = 1.48e-08 , maxiter = 50, norm_ord=2):
     '''
     This version is the version of Miranda & Zappa. It retuns i, the number of iterations
     i.e. the number of gradient evaluations used.
@@ -122,7 +123,7 @@ def project_zappa_manifold(manifold, z, Q, tol = 1.48e-08 , maxiter = 50, norm_o
     # While loop
     while la.norm(projected_value, ord=norm_ord) >= tol:
         try:
-            Jproj = manifold.Q(z - Q@a).T
+            Jproj = manifold.fullJacobian(z - Q@a)
         except ValueError as e:
             print("Jproj failed. ", e)
             return zeros(Q.shape[1]), 0, i

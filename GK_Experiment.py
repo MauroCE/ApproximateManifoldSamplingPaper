@@ -7,6 +7,7 @@ from scipy.stats import multivariate_normal as MVN
 from scipy.special import ndtri
 from Manifolds import GKManifold
 from TangentialHug import THUG
+from ConstrainedRWM import CRWM
 from HelperFunctions import compute_arviz_miness_runtime
 import time 
 
@@ -41,7 +42,7 @@ def generate_setting(m, ϵs, Bs, δ, n_chains, n_samples, seeds):
     }
 
 
-def compute_average_computational_cost(SETTINGS, α, method='linear'):
+def compute_average_computational_cost_thug(SETTINGS, α, method='linear'):
     """RUNS n_chains of THUG for each B and ϵ provided."""
     ξ0, ϵs, Bs, N_samples = SETTINGS['ξ0'], SETTINGS['ϵs'], SETTINGS['Bs'], SETTINGS['n_samples']
     n_ϵ = len(ϵs)
@@ -71,6 +72,29 @@ def compute_average_computational_cost(SETTINGS, α, method='linear'):
             THUG_AP[ϵ_ix, B_ix] = avg_ap
     return THUG_CC, THUG_AP
 
+def compute_average_computational_cost_crwm(SETTINGS, tol=1e-14, rev_tol=1e-14, maxiter=50):
+    """Same as above, for C-RWM."""
+    ξ0, Bs, n_chains = SETTINGS['ξ0'], SETTINGS['Bs'], SETTINGS['n_chains']
+    δ, N_samples     = SETTINGS['δ'], SETTINGS['n_samples']
+    manifold = SETTINGS['manifold']
+    seeds = SETTINGS['seeds']
+    CRWM_CC = zeros(len(Bs))
+    CRWM_AP = zeros(len(Bs))
+    for B_ix, B in enumerate(Bs):
+        chains = []
+        times  = []
+        avg_ap = 0.0
+        for chain_ix in range(n_chains):
+            start_time = time.time()
+            samples, _, acceptances = CRWM(ξ0, manifold, N_samples, T=B*δ, B=B, tol=tol, rev_tol=rev_tol, maxiter=maxiter, seed=seeds[chain_ix])
+            chains.append(samples)
+            times.append(time.time() - start_time)
+            avg_ap += (acceptances.mean() / n_chains)
+        # After having gone through each chain, compute ESS
+        CRWM_CC[B_ix] = compute_arviz_miness_runtime(chains, times)
+        CRWM_AP[B_ix] = avg_ap
+    return CRWM_CC, CRWM_AP
+
 
 if __name__ == "__main__":
     # Settings
@@ -78,13 +102,14 @@ if __name__ == "__main__":
     N_SAMPLES_PER_CHAIN = 1000
     STEP_SIZE = 0.01
     SEEDS_FOR_CHAINS = [1111, 2222, 3333, 4444]
+    EPSILONS = array([1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001])
     assert len(SEEDS_FOR_CHAINS) == N_CHAINS, "Number of seeds and number of chains differs."
     
 
     ### Dimensionality of the data: 50
     SETTINGS_50 = generate_setting(
         m=50,
-        ϵs=[1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001],
+        ϵs=EPSILONS,
         Bs=[1, 10, 50],
         δ=STEP_SIZE,
         n_chains=N_CHAINS,
@@ -93,12 +118,25 @@ if __name__ == "__main__":
     )
 
     ### Run Tangential Hug (α=0.0, 0.9, 0.99)
-    THUG00_CC, THUG00_AP = compute_average_computational_cost(SETTINGS_50, α=0.0)
-    # THUG09_CC, THUG09_AP = compute_average_computational_cost(SETTINGS_50, α=0.9)
-    # THUG99_CC, THUG99_AP = compute_average_computational_cost(SETTINGS_50, α=0.99)
+    # THUG00_CC, THUG00_AP = compute_average_computational_cost_thug(SETTINGS_50, α=0.0)
+    # THUG09_CC, THUG09_AP = compute_average_computational_cost_thug(SETTINGS_50, α=0.9)
+    # THUG99_CC, THUG99_AP = compute_average_computational_cost_thug(SETTINGS_50, α=0.99)
+    CRWM_CC, CRWM_AP     = compute_average_computational_cost_crwm(SETTINGS_50, tol=1e-14, rev_tol=1e-14)
 
     # Store results
     folder = "GK_Experiment"
-    save(folder + '/THUG00_CC.npy', THUG00_CC)
-    save(folder + '/THUG00_AP.npy', THUG00_AP)
+    # α = 0.0
+    # save(folder + '/THUG00_CC.npy', THUG00_CC)
+    # save(folder + '/THUG00_AP.npy', THUG00_AP)
+    # α = 0.9
+    # save(folder + '/THUG09_CC.npy', THUG09_CC)
+    # save(folder + '/THUG09_AP.npy', THUG09_AP)
+    # α = 0.99
+    # save(folder + '/THUG99_CC.npy', THUG99_CC)
+    # save(folder + '/THUG99_AP.npy', THUG99_AP)
+    # C-RWM
+    save(folder + '/CRWM_CC.npy', CRWM_CC)
+    save(folder + '/CRWM_AP.npy', CRWM_AP)
+    # epsilons
+    save(folder + '/EPSILONS.npy', EPSILONS)
 

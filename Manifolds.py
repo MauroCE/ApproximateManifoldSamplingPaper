@@ -413,7 +413,7 @@ class GKManifold(Manifold):
     def logη(self, ξ):
         """log posterior for c-rwm. This is on the manifold."""
         try:
-            J = self.J(ξ)
+            J = self.fullJacobian(ξ)
             logprior = self.logprior(ξ)
             correction_term  = - math.prod(np.linalg.slogdet(J@J.T))/2 
             return  logprior + correction_term
