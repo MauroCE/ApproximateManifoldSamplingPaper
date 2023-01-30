@@ -78,12 +78,16 @@ class GeneralizedEllipse(Manifold):
         Class implementing the ellipsoid corresponding to the `z`-level set of a 
         multivariate normal (MVN) with mean `mu` and covariance matrix `Sigma`.
 
-        mu : Numpy Array
-             Center of the sphere, and mean of the MVN. Must be a 1D array of dimension (3, )
-        Sigma : Numpy Array
-                Covariance matrix of the MVN, specifying the angle and scaling of the ellipse.
-        z : float 
-            Level set value. This identifies which level set / contour of the MVN to consider.
+        Arguments: 
+
+        :param mu: Center of the Ellipsoid, or equivalently, mean of the MVN. Must be a 1D array of dimension (3, ).
+        :type mu: ndarray
+
+        :param Sigma: Covariance matrix of the MVN, specifying angle and scaling of ellipse. Must be a 3x3 matrix.
+        :type Sigma: ndarray
+
+        :param z: Level-set value. This identifies which level-set/contour of the MVN to consider.
+        :type z: float
         """
         self.n = len(mu)    # Dimension of the ambient space
         # Store MVN parameters
@@ -99,11 +103,34 @@ class GeneralizedEllipse(Manifold):
         super().__init__(m=1, d=(self.n-1))
 
     def q(self, xyz):
-        """Constraint function for the contour of MVN"""
+        """Constraint function for the contour of MVN.
+        
+        Arguments: 
+
+        :param xyz: Input array at which we want to evaluate the constraint. Must have shape (3, ).
+        :type xyz: ndarray
+
+        Returns: 
+
+        :param q_xyz: Value of the constraint function at `xyz`.
+        :type q_xyz: ndarray
+        """
         return (xyz - self.mu) @ (self.Sinv @ (xyz - self.mu)) - self.gamma
 
     def Q(self, xyz):
-        """Q"""
+        """Transpose of the Jacobian matrix of the constraint function. Notice that for our experiments we will
+        not actually use this but use `fullJacobian` due to reparametrization issues.
+        
+        Arguments: 
+
+        :param xyz: Input array at which we want to evaluate the constraint. Must have shape (3, ).
+        :type xyz: ndarray
+
+        Returns: 
+
+        :param Q_xyz: Transpose of the Jacobian (unparametrized) evaluated at `xyz`.
+        :type Q_xyz: ndarray
+        """
         return (2 * self.Sinv @ (xyz - self.mu)).reshape(-1, self.m)
 
     def sample(self):
