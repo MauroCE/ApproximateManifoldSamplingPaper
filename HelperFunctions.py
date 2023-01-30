@@ -16,7 +16,8 @@ def generate_powers_of_ten(max_exponent, min_exponent):
     :param min_exponent: Minimum exponent of `10`. For instance `min_exponent=-1` means sequence ends at `0.1`.
     :type min_exponent: int
 
-    Returns 
+    Returns:
+    
     :param array_of_powers_of_ten: Array containing powers of `10` from `10^max_exponent` to `10^min_exponent` in 
                                    descending order.
     :type array_of_powers_of_ten: ndarray
