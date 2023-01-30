@@ -21,8 +21,8 @@ THUG00_CC_100 = load(folder + '/THUG00_CC_100.npy')
 THUG00_AP_100 = load(folder + '/THUG00_AP_100.npy')
 THUG09_CC_100 = load(folder + '/THUG09_CC_100.npy')
 THUG09_AP_100 = load(folder + '/THUG09_AP_100.npy')
-# THUG99_CC_100 = load(folder + '/THUG99_CC_100.npy')
-# THUG99_AP_100 = load(folder + '/THUG99_AP_100.npy')
+THUG99_CC_100 = load(folder + '/THUG99_CC_100.npy')
+THUG99_AP_100 = load(folder + '/THUG99_AP_100.npy')
 # CRWM_CC_100 = load(folder + '/CRWM_CC_100.npy')
 # CRWM_AP_100 = load(folder + '/CRWM_AP_100.npy')
 # Epsilons
@@ -84,6 +84,10 @@ ax[m100].plot(EPSILONS, show_only_positive_ap(THUG00_CC_100, THUG00_AP_100, 2), 
 ax[m100].plot(EPSILONS, show_only_positive_ap(THUG09_CC_100, THUG09_AP_100, 0), label='1α', marker='*', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 ax[m100].plot(EPSILONS, show_only_positive_ap(THUG09_CC_100, THUG09_AP_100, 1), label='10α', marker='*', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 ax[m100].plot(EPSILONS, show_only_positive_ap(THUG09_CC_100, THUG09_AP_100, 2), label='50α', marker='*', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+# α = 0.99
+ax[m100].plot(EPSILONS, show_only_positive_ap(THUG99_CC_100, THUG99_AP_100, 0), label='1α', marker='*', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax[m100].plot(EPSILONS, show_only_positive_ap(THUG99_CC_100, THUG99_AP_100, 1), label='10α', marker='*', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax[m100].plot(EPSILONS, show_only_positive_ap(THUG99_CC_100, THUG99_AP_100, 2), label='50α', marker='*', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 # Prettify
 for i in range(3):
     # Set xticks
