@@ -5,7 +5,51 @@ import scipy.linalg as la
 
 
 def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, seed=1234):
-    """C-RWM with Rattle integration."""
+    """Constrained Random Walk with RATTLE integration.
+    
+    Arguments
+
+    :param x0: Initial state of the Markov Chain. Must lie on the manifold. 
+    :type x0: ndarray
+
+    :param manifold: Instance from the Manifold class. Contains the constraint function among other functions.
+    :type manifold: Manifold
+
+    :param n: Number of samples.
+    :type n: int
+
+    :param T: Total integration time.
+    :type T: float
+
+    :param B: Number of Leapfrog steps.
+    :type B: int
+
+    :param tol: Tolerance for forward projection.
+    :type tol: float
+
+    :param rev_tol: Tolerance for reverse projection.
+    :type rev_tol: float
+
+    :param maxiter: Maximum number of iterations for projection and reprojection steps.
+    :type maxiter: int
+
+    :param norm_ord: Order of the norm used to check convergence. Should be either `2` or `np.inf`
+    :type norm_ord: float
+
+    :param seed: Seed of the random number generator. Used for reproducibility.
+    :type seed: int
+
+    Returns
+    
+    :param samples: Array containing samples as rows. Has dimension (n, d) where d is the dimension of ambient space.
+    :type samples: ndarray
+
+    :param n_evals: Total number of Jacobian evaluations.
+    :type n_evals: int
+
+    :param accepted: Binary array of length `n` showing `1` if that samples was accepted, `0` otherwise.
+    :type accepted: ndarray
+    """
     assert type(B) == int
     assert norm_ord in [2, inf]
     assert len(x0) == manifold.n, "Initial point has wrong dimension."
