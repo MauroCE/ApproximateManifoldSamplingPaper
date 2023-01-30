@@ -10,30 +10,46 @@ def THUG(x0, T, B, N, α, logpi, jac, method='qr', seed=1234):
     """Tangential Hug Sampler  (THUG). Two projection methods available:
         - 'qr': projects onto row space of Jacobian using QR decomposition.
         - 'linear': solves a linear system to project.
-    Arguments:
-    x0 : ndarray
-         Initial state of the Markov Chain. For the algorithm to work, this should be in a region of non-zero density.
-    T  : float
-         Total integration time. In the paper T = B*δ.
-    B  : int
-         Number of bounces per trajectory/sample. Equivalent to the number of leapfrog steps in HMC. Clearly δ = T/B.
-    N  : int
-         Number of samples.
-    α  : float
-         Squeezing parameter for THUG. Must be in [0, 1), the larger α, the more we squeeze the auxiliary velocity variable
-        towards the tangent space.
-    logpi : callable
-            Function computing the log density for the target (which should be a filamentary distribution).
-    jac   : callable
-            Function computing the Jacobian of f at a point.
-    method : string
-             Method for projecting onto the row space of the Jacobian. Two options are available QR or 'linear'.
 
-    Returns:
-    samples : ndarray
-              (N, len(x0)) array containing the samples from logpi.
-    acceptances : ndarray
-                  Array of 0s and 1s indicating whether a certain sample was an acceptance or a rejection.
+    Arguments:
+
+    :param x0: Initial state of the Markov Chain. For the algorithm to work, this should be in a region of non-zero 
+               density.
+    :type x0: ndarray
+
+    :param T: Total integration time. It is the product of the number of bounces and the step-size `T = B*δ`.
+    :type T: float
+
+    :param B: Number of bounces per sample/trajectory. Equivalent to the number of leapfrog steps in HMC. `δ = T/B`.
+    :type B: int
+
+    :param N: Number of samples.
+    :type N: int
+
+    :param alpha: Squeezing parameter for THUG. Must be in `[0, 1)`. The larger alpha, the more we squeeze the 
+                  auxiliary velocity variable towards the tangent space.
+    :type alpha: float
+
+    :param logpi: Function computing the log-density for the target (which should be a filamentary distribution).
+    :type logpi: callable
+
+    :param jac: Function computing the Jacobian of `f` at a point.
+    :type jac: callable
+
+    :param method: Method for projecting onto the row space of the Jacobian. Two options are available
+                   `'QR'` or `'linear'`.
+    :type method: string
+
+    :param seed: Seed of the random number generator. Used for reproducibility.
+    :type seed: int
+
+    Returns: 
+
+    :param samples: `(N, len(x0))` array contianing the samples from `logpi`.
+    :type samples: ndarray
+
+    :param acceptances: Array of `0`s and `1`s indicating whether a certain sample was an acceptance or rejection.
+    :type acceptances: ndarray
     """
     assert method == 'qr' or method == 'linear' or method == 'lstsq'
     rng = default_rng(seed)
