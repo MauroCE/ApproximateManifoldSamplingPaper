@@ -470,6 +470,13 @@ class LVManifold(Manifold):
 
 class GKManifold(Manifold):
     def __init__(self, ystar):
+        """Manifold for the G-and-K experiment. It uses the reparametrization discussed in the paper.
+        
+        Arguments:
+
+        :param ystar: Observed data identifying the manifold. Must have shape (m, ).
+        :type ystar: ndarray
+        """
         self.m = len(ystar)            # Number constraints = dimensionality of the data
         self.d = 4                     # Manifold has dimension 4 (like the parameter θ)
         self.n = self.d + self.m       # Dimension of ambient space is m + 4
@@ -480,7 +487,18 @@ class GKManifold(Manifold):
         self.Ginv = lambda θ: ndtri(θ/10)
 
     def q(self, ξ):
-        """Constraint for G and K."""
+        """Constraint for G and K. This is the reparametrized constraint.
+        
+        Arguments: 
+        
+        :param xi: Point in the ambient space at which we evaluate the reparametrized constraint function.
+        :type xi: ndarray
+        
+        Returns: 
+        
+        :param q_xi: Value of the constraint function at `xi`.
+        :type q_xi: float
+        """
         ξ = concatenate((self.G(ξ[:4]), ξ[4:]))  # expecting theta part to be N(0, 1)
         with catch_warnings():
             filterwarnings('error')
@@ -490,15 +508,17 @@ class GKManifold(Manifold):
                 raise ValueError("Constraint found Overflow warning.")
                 
     def _q_raw_uniform(self, ξ):
-        """Constraint function expecting ξ[:4] ~ U(0, 10). It doesn't do any warning check."""
+        """Constraint function expecting `ξ[:4] ~ U(0, 10)`. It doesn't do any warning check. 
+        This is basically the original constraint function before reparametrization."""
         return (ξ[0] + ξ[1]*(1 + 0.8*(1 - exp(-ξ[2]*ξ[4:]))/(1 + exp(-ξ[2]*ξ[4:]))) * ((1 + ξ[4:]**2)**ξ[3])*ξ[4:]) - self.ystar
+
     def _q_raw_normal(self, ξ):
-        """Same as `_q_raw_uniform` except expects ξ[:4]~N(0,1)."""
+        """Same as `_q_raw_uniform` except expects `ξ[:4]~N(0,1)`."""
         ξ = concatenate((self.G(ξ[:4]), ξ[4:])) 
         return self._q_raw_uniform(ξ)
 
     def Q(self, ξ):
-        """Transpose of Jacobian for G and K. """
+        """Transpose of Jacobian for G and K. This is the reparametrized version. It also lacks the Jacobian `JG`."""
         ξ = concatenate((self.G(ξ[:4]), ξ[4:]))
         return vstack((
         ones(len(ξ[4:])),
@@ -509,7 +529,7 @@ class GKManifold(Manifold):
     ))
     
     def J(self, ξ):
-        """Safely computes Jacobian."""
+        """Safely computes Jacobian. This is the Jacobian of which `Q` is transpose of. Again, lacks `JG`."""
         with catch_warnings():
             filterwarnings('error')
             try:
@@ -518,14 +538,28 @@ class GKManifold(Manifold):
                 raise ValueError("J computation found Runtime warning.")
                 
     def fullJacobian(self, ξ):
-        """J_f(G(ξ)) * J_G(ξ)."""
+        """J_f(G(ξ)) * J_G(ξ). This is the true Jacobian of the reparametrized constraint function.
+        Obtained using the Chain Rule. This is what should be used in THUG and C-RWM algorithms."""
         JGbar = block_diag(10*np.diag(ndist.pdf(ξ[:4])), eye(len(ξ[4:])))
         return self.J(ξ) @ JGbar
                 
     def log_parameter_prior(self, θ):
         """IMPORTANT: Typically the prior distribution is a U(0, 10) for all four parameters.
         We keep the same prior but since we don't want to work on a constrained space, we 
-        reparametrize the problem to an unconstrained space N(0, 1)."""
+        reparametrize the problem to an unconstrained space N(0, 1).
+        
+        Arguments: 
+        
+        :param theta: Parameter at which we want to evaluate the log-prior. This should be drawn from a normal
+                      distribution. The log-prior here is `U(0, 10)` so we first transform `theta` into a sample 
+                      from `U(0, 10)` and then we compute the log prior. Should have length `4`.
+        :type theta: ndarray
+
+        Returns: 
+
+        :param log_prior: Value of reparametrized log prior at `theta`. If overflow happens it returns `-np.inf`.
+        :type log_prior: float
+        """
         with catch_warnings():
             filterwarnings('error')
             try:
@@ -538,7 +572,7 @@ class GKManifold(Manifold):
         return self.log_parameter_prior(ξ[:4]) - ξ[4:]@ξ[4:]/2
 
     def logη(self, ξ):
-        """log posterior for c-rwm. This is on the manifold."""
+        """Log-posterior for C-RWM. This is on the manifold."""
         try:
             J = self.fullJacobian(ξ)
             logprior = self.logprior(ξ)
@@ -568,8 +602,34 @@ class GKManifold(Manifold):
         return np.max(abs(self.q(ξ))) < tol
     
     def find_point_on_manifold_from_θ(self, θfixed, ϵ, maxiter=2000, tol=1.49012e-08):
-        """Same as the above but we provide the θfixed. Can be used to find a point where
-        the theta is already θ0."""
+        """Finds a point on the manifold for a fixed value of `theta`. Can be used to find a point where
+        the theta is already `θ0`.
+        
+        Arguments: 
+        
+        :param thetafixed: Theta that we want fixed and from which we should find the latent variables such that
+                           together `(theta, latent_variables)` lie on the manifold. Should have shape `(4, )`.
+        :type thetafixed: ndarray
+
+        :param epsilon: Epsilon determines a filamentary distribution. This filamentary distribution is used
+                        to determine whether to accept or reject the point found via `fsolve.` Basically, this is to 
+                        make sure the point still has positive mass according to a given `epsilon`-filamentary 
+                        distribution. Of course, if the point is close enough to the manifold for a tolerance < `epsilon`
+                        this should always be the case, but you know how programming is.
+        :type epsilon: float
+
+        :param maxiter: Maximum number of iterations used to find a point on the manifold.
+        :type maxiter: int
+
+        :param tol: Tolerance for `fsolve`. Used to find point on the manifold.
+        :type tol: float
+        
+        Returns:
+        
+        :param point: Point on the manifold with theta fixed to `thetafixed`. Raises a `ValueError` if a point 
+                      could not be found. 
+        :type point: float
+        """
         i = 0
         log_abc_posterior = self.generate_logηϵ(ϵ)
         function = lambda z: self._q_raw_normal(concatenate((θfixed, z)))
