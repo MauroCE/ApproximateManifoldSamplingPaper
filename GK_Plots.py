@@ -7,18 +7,24 @@ from numpy import load
 
 # Read Data
 folder = 'GK_Experiment'
-# α = 0.0
-THUG00_CC = load(folder + '/THUG00_CC.npy')
-THUG00_AP = load(folder + '/THUG00_AP.npy')
-# α = 0.9
-THUG09_CC = load(folder + '/THUG09_CC.npy')
-THUG09_AP = load(folder + '/THUG09_AP.npy')
-# α = 0.99
-THUG99_CC = load(folder + '/THUG99_CC.npy')
-THUG99_AP = load(folder + '/THUG99_AP.npy')
-# C-RWM
-CRWM_CC = load(folder + '/CRWM_CC.npy')
-CRWM_AP = load(folder + '/CRWM_AP.npy')
+# m = 50
+THUG00_CC_50 = load(folder + '/THUG00_CC_50.npy')
+THUG00_AP_50 = load(folder + '/THUG00_AP_50.npy')
+THUG09_CC_50 = load(folder + '/THUG09_CC_50.npy')
+THUG09_AP_50 = load(folder + '/THUG09_AP_50.npy')
+THUG99_CC_50 = load(folder + '/THUG99_CC_50.npy')
+THUG99_AP_50 = load(folder + '/THUG99_AP_50.npy')
+CRWM_CC_50 = load(folder + '/CRWM_CC_50.npy')
+CRWM_AP_50 = load(folder + '/CRWM_AP_50.npy')
+# m = 100
+THUG00_CC_100 = load(folder + '/THUG00_CC_100.npy')
+THUG00_AP_100 = load(folder + '/THUG00_AP_100.npy')
+THUG09_CC_100 = load(folder + '/THUG09_CC_100.npy')
+THUG09_AP_100 = load(folder + '/THUG09_AP_100.npy')
+THUG99_CC_100 = load(folder + '/THUG99_CC_100.npy')
+THUG99_AP_100 = load(folder + '/THUG99_AP_100.npy')
+CRWM_CC_100 = load(folder + '/CRWM_CC_100.npy')
+CRWM_AP_100 = load(folder + '/CRWM_AP_100.npy')
 # Epsilons
 EPSILONS = load(folder + '/EPSILONS.npy')
 

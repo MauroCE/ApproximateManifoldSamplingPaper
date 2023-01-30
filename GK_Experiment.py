@@ -117,26 +117,46 @@ if __name__ == "__main__":
         seeds=SEEDS_FOR_CHAINS
     )
 
-    ### Run Tangential Hug (α=0.0, 0.9, 0.99)
-    # THUG00_CC, THUG00_AP = compute_average_computational_cost_thug(SETTINGS_50, α=0.0)
-    # THUG09_CC, THUG09_AP = compute_average_computational_cost_thug(SETTINGS_50, α=0.9)
-    # THUG99_CC, THUG99_AP = compute_average_computational_cost_thug(SETTINGS_50, α=0.99)
-    CRWM_CC, CRWM_AP     = compute_average_computational_cost_crwm(SETTINGS_50, tol=1e-14, rev_tol=1e-14)
+    SETTINGS_100 = generate_setting(
+        m=100,
+        ϵs=EPSILONS,
+        Bs=[1, 10, 50],
+        δ=STEP_SIZE,
+        n_chains=N_CHAINS,
+        n_samples=N_SAMPLES_PER_CHAIN,
+        seeds=SEEDS_FOR_CHAINS
+    )
+
+    ### m = 50
+    # THUG00_CC_50, THUG00_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.0)
+    # THUG09_CC_50, THUG09_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.9)
+    # THUG99_CC_50, THUG99_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.99)
+    # CRWM_CC_50, CRWM_AP_50     = compute_average_computational_cost_crwm(SETTINGS_50, tol=1e-14, rev_tol=1e-14)
+    ### m = 100
+    THUG00_CC_100, THUG00_AP_100 = compute_average_computational_cost_thug(SETTINGS_100, α=0.0)
 
     # Store results
     folder = "GK_Experiment"
-    # α = 0.0
-    # save(folder + '/THUG00_CC.npy', THUG00_CC)
-    # save(folder + '/THUG00_AP.npy', THUG00_AP)
-    # α = 0.9
-    # save(folder + '/THUG09_CC.npy', THUG09_CC)
-    # save(folder + '/THUG09_AP.npy', THUG09_AP)
-    # α = 0.99
-    # save(folder + '/THUG99_CC.npy', THUG99_CC)
-    # save(folder + '/THUG99_AP.npy', THUG99_AP)
-    # C-RWM
-    save(folder + '/CRWM_CC.npy', CRWM_CC)
-    save(folder + '/CRWM_AP.npy', CRWM_AP)
+    # m = 50
+    # save(folder + '/THUG00_CC_50.npy', THUG00_CC_50)
+    # save(folder + '/THUG00_AP_50.npy', THUG00_AP_50)
+    # save(folder + '/THUG09_CC_50.npy', THUG09_CC_50)
+    # save(folder + '/THUG09_AP_50.npy', THUG09_AP_50)
+    # save(folder + '/THUG99_CC_50.npy', THUG99_CC_50)
+    # save(folder + '/THUG99_AP_50.npy', THUG99_AP_50)
+    # save(folder + '/CRWM_CC_50.npy', CRWM_CC_50)
+    # save(folder + '/CRWM_AP_50.npy', CRWM_AP_50)
+    # m = 100
+    save(folder + '/THUG00_CC_100.npy', THUG00_CC_100)
+    save(folder + '/THUG00_AP_100.npy', THUG00_AP_100)
+    # save(folder + '/THUG09_CC_100.npy', THUG09_CC_100)
+    # save(folder + '/THUG09_AP_100.npy', THUG09_AP_100)
+    # save(folder + '/THUG99_CC_100.npy', THUG99_CC_100)
+    # save(folder + '/THUG99_AP_100.npy', THUG99_AP_100)
+    # save(folder + '/CRWM_CC_100.npy', CRWM_CC_100)
+    # save(folder + '/CRWM_AP_100.npy', CRWM_AP_100)
+
+
     # epsilons
     save(folder + '/EPSILONS.npy', EPSILONS)
 
