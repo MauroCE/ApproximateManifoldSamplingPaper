@@ -12,5 +12,5 @@ The key behind its efficiency is in its nifty bounce mechanism that allows it to
 ### Visualization
 Consider a mixture of two Gaussians concentrated around an ellipse. Standard sampling algorithms such as Random Walk Metropolis or Hamiltonian Monte Carlo struggle to efficiently sample from these types of distributions, but THUG is well-adapted to this task.
 
-
+![Hello](/images/rwm_vs_hug_on_ellipse_density_with_varying_stepsize.png)
 
