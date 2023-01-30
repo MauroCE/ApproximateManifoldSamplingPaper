@@ -14,3 +14,7 @@ Consider a mixture of two Gaussians concentrated around an ellipse. Standard sam
 
 ![Approximate Manifold Sampling](/images/rwm_vs_hug_on_ellipse_density_with_varying_stepsize.png)
 
+
+### Related Projects
+Exact manifold sampling has been addressed in many papers, we refer to the paper for a thorough literature review. [Mici](https://github.com/matt-graham/mici) contains code to run Constrained Hamiltonian Monte Carlo. In this repository we compare THUG with Constrained Random Walk, which is a special case of C-HMC for a constant potential. 
+
