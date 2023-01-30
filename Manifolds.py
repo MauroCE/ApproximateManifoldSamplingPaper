@@ -148,15 +148,32 @@ class LVManifold(Manifold):
         """Class defining the data manifold for the Lotka-Volterra ABC problem. The simulator is defined by an
         Euler-Marayama discretization of the LV SDE.
 
-        Args:
-            Ns (int, optional): Number of discretization time steps in the forward simulator. Defaults to 50.
-            step_size (float, optional): Step size used in the discretization within the forward simulator. Defaults to 1.0.
-            r0 (int, optional): Number of preys at time t=0. Defaults to 100.
-            f0 (int, optional): Number of predators at time t=0. Defaults to 100.
-            z_true (tuple, optional): True parameter values used to generate the data. Defaults to (0.4, 0.005, 0.05, 0.001).
-            seed (int, optional): Random seed used to generate the data. Defaults to 1111.
-            seeds (list, optional): List of seeds. Each seed used to find initial point for each chain. Defaults to [2222, 3333, 4444, 5555].
-            n_chains (int, optional): Number of chains used to compute ESS using ArViz. Defaults to 4.
+        Arguments: 
+
+        :param Ns: Number of discretization time steps used in the forward simulator. Defaults to `50`.
+        :type Ns: int 
+
+        :param step_size: Step size used in the discretization in the forward simulator. Default to `1.0`.
+        :type step_size: float
+
+        :param r0: Number of preys at time `t=0`. Initial condition of the SDE. Defaults to `100`.
+        :type r0: int
+
+        :param f0: Number of predators at time `t=0`. Initial condition of the SDE. Defaults to `100`.
+        :type f0: int
+
+        :param z_true: True parameter values used to generate the data. Defaults to `(0.4, 0.005, 0.05, 0.001)`.
+        :type z_true: tuple
+
+        :param seed: Random seed used to generate the data `y^*`. Defaults to `1111`.
+        :type seed: int
+
+        :param seeds: List of random seeds. Each seed is used to find the initial point for each chain. 
+                      Defaults to `[2222, 3333, 4444, 5555]`.
+        :type seeds: list
+
+        :param n_chains: Number of chains used to compute ESS using Arviz. Defaults to `4`.
+        :type n_chains: int
         """
         assert len(seeds) == n_chains, "Number of seeds must equal number of chains."
         self.Ns = Ns              # Number of steps used in integrating LV SDE
@@ -182,26 +199,26 @@ class LVManifold(Manifold):
         self.ystar  = self.u_to_x(self.u_true)
         
     def z_to_u1(self, z):
-        """Transforms a parameter z into u1 (standard normal variables)."""
+        """Transforms a parameter `z` into `u1` (standard normal variables)."""
         assert len(z) == 4, "z should have length 4, but found {}".format(len(z))
         m_param = -2*ones(4)
         s_param = ones(4)
         return (log(z) - m_param) / s_param
     
     def u1_to_z(self, u1):
-        """Given u1, it maps it to z."""
+        """Given `u1`, it maps it to `z`."""
         assert len(u1) == 4, "u1 should have length 4, but found {}".format(len(u1))
         m_param = -2*ones(4)
         s_param = ones(4)
         return exp(s_param*u1 + m_param)
     
     def g(self, u):
-        """Takes [u1, u2] and returns [z, u2]"""
+        """Takes `[u1, u2]` and returns `[z, u2]`"""
         assert len(u) == self.n, "u should have length {}, but found {}".format(self.n, len(u))
         return np.concatenate((self.u1_to_z(u[:4]), u[4:]))
     
     def u_to_x(self, u):
-        """Maps u=[u1, u2] to z."""
+        """Maps `u=[u1, u2]` to `z`."""
         assert len(u) == self.n, "u should have length {}, but found {}.".format(self.n, len(u))
         u1, u2 = u[:4], u[4:]
         u2_r   = u2[::2]
@@ -217,7 +234,7 @@ class LVManifold(Manifold):
         return np.ravel([r[1:], f[1:]], 'F')
     
     def zu2_to_x(self, zu2):
-        """Same as u_to_x but this takes as input [z, u2]."""
+        """Same as `u_to_x` but this takes as input `[z, u2]`."""
         assert len(zu2) == self.n, "zu2 should have length {}, but found {}".format(self.n, len(zu2))
         z1, z2, z3, z4 = zu2[:4]
         u2 = zu2[4:]
@@ -233,14 +250,14 @@ class LVManifold(Manifold):
         return np.ravel([r[1:], f[1:]], 'F')
     
     def Jg(self, ξ):
-        """Jacobian of the function g:[u_1, u_2] --> [z, u_2]."""
+        """Jacobian of the function `g:[u_1, u_2] --> [z, u_2]`."""
         assert len(ξ) == self.n, "ξ should have length {}, but found {}.".format(self.n, len(ξ))
         m_param = -2*ones(4)
         s_param = ones(4)
         return diag(np.concatenate((s_param*exp(s_param*ξ[:4] + m_param), ones(2*self.Ns))))
     
     def oneat(self, ix, length=None):
-        """Generates a vector of zeros of length `length` with a one at index ix."""
+        """Generates a vector of zeros of length `length` with a one at index `ix`."""
         assert type(ix) == int, "index for oneat() should be integer but found {}".format(type(ix))
         if length is None:
             length = self.n
@@ -249,8 +266,8 @@ class LVManifold(Manifold):
         return output
     
     def Jf(self, ξ):
-        """Jacobian of the function f:[z, u_2] --> x.
-        Assume r and f contains r0 and f0 at the start."""
+        """Jacobian of the function `f:[z, u_2] --> x`.
+        Assume `r` and `f` contains `r0` and `f0` at the start."""
         assert len(ξ) == self.n, "ξ should have length {}, but found {}.".format(self.n, len(ξ))
         J = zeros((self.m, self.n))
         δ  = self.δ
@@ -274,12 +291,12 @@ class LVManifold(Manifold):
         return J
 
     def q(self, ξ):
-        """Constraint function taking u=[u1, u2] and comparing against true data."""
+        """Constraint function taking `u=[u1, u2]` and comparing against true data."""
         assert len(ξ) == self.n, "ξ should have length {}, but found {}.".format(self.n, len(ξ))
         return self.u_to_x(ξ) - self.ystar
     
     def J(self, ξ):
-        """Jacobian. Here u=[u1, u2]."""
+        """Jacobian. Here `u=[u1, u2]`."""
         assert len(ξ) == self.n, "ξ should have length {}, but found {}.".format(self.n, len(ξ))
         return self.Jf(self.g(ξ)).dot(self.Jg(ξ))
     
@@ -300,7 +317,26 @@ class LVManifold(Manifold):
             return -np.inf
         
     def find_point_on_manifold(self, maxiter=2000, tol=1e-14, random_u2_guess=False):
-        """Finds a point on the Manifold with input u=[u1, u2]."""
+        """Finds a point on the Manifold with input u=[u1, u2].
+        
+        Arguments: 
+        
+        :param maxiter: Maximum number of iterations allowed to find a point on the manifold before raising
+                        an error.
+        :type maxiter: int
+        
+        :param tol: Tolerance used to check for convergence withing `scipy.optimize.fsolve`.
+        :type tol: float
+
+        :param random_u2_guess: Boolean flag determining whether `u2` should be initialized at random (`True`)
+                                or as a zero vector (`False`).
+        :type random_u2_guess: bool
+
+        Returns:
+
+        :param point: Point on the manifold within tolerance `tol`. If not found, raises `ValueError`.
+        :type point: ndarray
+        """
         u2_guess = randn(self.m) if random_u2_guess else zeros(self.m)
         i = 0
         with catch_warnings():
@@ -357,25 +393,79 @@ class LVManifold(Manifold):
         return self.u0s
             
     def transform_usamples_to_zsamples(self, samples):
-        """Given samples of size (N, 4 + 2*Ns) it takes the first 4 columns and transforms them."""
+        """Given samples of size `(N, 4 + 2*Ns)` it takes the first 4 columns and transforms them."""
         n_samples, input_dim = samples.shape
         assert input_dim == self.n, "Wrong dim. Expected {} , found {}".format(self.n, input_dim)
         return apply_along_axis(self.u1_to_z, 1, samples[:, :4])
     
     def log_normal_kernel(self, ξ, ϵ):
-        """Log normal kernel density."""
+        """Log normal kernel density. Approximation to the identity.
+        
+        Arguments:
+        
+        :param xi: Point in the ambient space at which we want to evaluate the kernel.
+        :type xi: ndarray
+        
+        :param epsilon: Bandwidth parameter for the kernel/approximation to the identity.
+        :type epsilon: float
+        
+        Returns: 
+        :param kernel_value: Kernel with bandwidth `epsilon` evaluated at `xi`.
+        :type kernel_value: float
+        """
         assert len(ξ) == self.n, "ξ should have length {}, but found {}.".format(self.n, len(ξ))
-        u = norm(self.q(ξ))   ##### THIS IS NOT THE USUAL u
-        return -u**2/(2*(ϵ**2)) -0.5*log(2*pi*(ϵ**2))
+        u = self.q(ξ)
+        m = len(u)
+        return -u@u/(2*(ϵ**2)) - m*log(ϵ) - m*log(2*pi)/2
 
     def generate_logpi(self, ϵ):
-        """Generates ABC posterior using a certain epsilon value. Uses a Gaussian kernel. """
+        """Generates ABC posterior using a certain epsilon value. Uses a Gaussian kernel. 
+        
+        Arguments: 
+        
+        :param epsilon: Epsilon used in the smoothing kernel to identify how tight the filamentary distribution is.
+        :type epsilon: float
+
+        Returns:
+
+        :param log_eta_epsilon: Log ABC posterior with bandwidth parameter `epsilon`.
+        :type log_eta_epsilon: callable    
+        """
         logηϵ = lambda ξ: self.log_normal_kernel(ξ, ϵ) - ξ@ξ/2
         return logηϵ
     
     def is_on_manifold(self, ξ, tol=1e-14):
-        """Checks if a point is on the manifold."""
+        """Checks if a point is on the manifold.
+        
+        Arguments: 
+        
+        :param xi: Point for which we want to check if it lies on the manifold or not.
+        :type xi: ndarray
+
+        :param tol: Tolerance used to check if `xi` is on the manifold. Defaults to `1e-14`.
+        :type tol: float
+
+        Returns 
+
+        :param on_manifold: Boolean flag indicating if point is on manifold (`True`) or not (`False`) according
+                            to tolerance `tol`.
+        :type on_manifold: bool
+        """
         return max(abs(self.q(ξ))) <= tol
+
+
+
+    def generate_logηϵ(self, ϵ, kernel='normal'):
+        """Returns the log abc posterior for THUG."""
+        if kernel not in ['normal']:
+            raise NotImplementedError
+        else:
+            def log_abc_posterior(ξ):
+                """Log-ABC-posterior."""
+                u = self.q(ξ)
+                m = len(u)
+                return self.logprior(ξ) - u@u/(2*ϵ**2) - m*log(ϵ) - m*log(2*pi)/2
+            return log_abc_posterior
 
 
 class GKManifold(Manifold):
