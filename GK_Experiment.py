@@ -133,7 +133,8 @@ if __name__ == "__main__":
     # THUG99_CC_50, THUG99_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.99)
     # CRWM_CC_50, CRWM_AP_50     = compute_average_computational_cost_crwm(SETTINGS_50, tol=1e-14, rev_tol=1e-14)
     ### m = 100
-    THUG00_CC_100, THUG00_AP_100 = compute_average_computational_cost_thug(SETTINGS_100, α=0.0)
+    # THUG00_CC_100, THUG00_AP_100 = compute_average_computational_cost_thug(SETTINGS_100, α=0.0)
+    THUG09_CC_100, THUG09_AP_100 = compute_average_computational_cost_thug(SETTINGS_100, α=0.9)
 
     # Store results
     folder = "GK_Experiment"
@@ -147,10 +148,10 @@ if __name__ == "__main__":
     # save(folder + '/CRWM_CC_50.npy', CRWM_CC_50)
     # save(folder + '/CRWM_AP_50.npy', CRWM_AP_50)
     # m = 100
-    save(folder + '/THUG00_CC_100.npy', THUG00_CC_100)
-    save(folder + '/THUG00_AP_100.npy', THUG00_AP_100)
-    # save(folder + '/THUG09_CC_100.npy', THUG09_CC_100)
-    # save(folder + '/THUG09_AP_100.npy', THUG09_AP_100)
+    # save(folder + '/THUG00_CC_100.npy', THUG00_CC_100)
+    # save(folder + '/THUG00_AP_100.npy', THUG00_AP_100)
+    save(folder + '/THUG09_CC_100.npy', THUG09_CC_100)
+    save(folder + '/THUG09_AP_100.npy', THUG09_AP_100)
     # save(folder + '/THUG99_CC_100.npy', THUG99_CC_100)
     # save(folder + '/THUG99_AP_100.npy', THUG99_AP_100)
     # save(folder + '/CRWM_CC_100.npy', CRWM_CC_100)

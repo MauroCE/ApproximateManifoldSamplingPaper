@@ -29,10 +29,13 @@ class Manifold:
         set of f. There is nothing special about the value 0, but it is convenient: given another function g, if the level set of interest
         is {x \in Rn : g(x) = y} then we simply define f(x) = g(x) - y.
 
-        m : Int
-            Number of constraints & Co-dimension of the manifold. (e.g. 1 for Torus/Sphere in 3D)
-        d : Int
-            Dimension of the manifold. (e.g. 2 for Torus/Sphere in 3D)
+        Arguments: 
+        
+        :param m: Number of constraints. Co-Dimension of the manifold. For instance, for a Sphere in 3D this would be 1.
+        :type m: int
+
+        :param d: Dimension of the manifold. For instance, for a Sphere in 3D this would be 2.
+        :type d: int
         """
         self.m = m                # Co-Dimension of the Manifold
         self.d = d                # Dimension of the Manifold
@@ -42,22 +45,29 @@ class Manifold:
         """
         Computes a tangent basis from the Q matrix (the transpose of the Jacobian matrix).
 
-        Q : Numpy Array
-            2D Numpy array of dimension (m + d, m) containing gradients of the constraints as columns.
-        returns : Matrix containing basis of tangent space as its columns.
+        Arguments:
+
+        :param Q: 2D Numpy array containing gradients of the constraints as columns. It is the transpose of 
+                  the Jacobian. Has dimension `(m + d, m)`.
+        :type Q: ndarray
+
+        Returns: 
+
+        :param tangent_basis: Matrix containing basis of tangent space as its columns. 
+        :type tangent_basis: ndarray
         """
         assert Q.shape == (self.m + self.d, self.m), "Q must have shape ({}, {}) but found shape {}".format(self.m+self.d, self.m, Q.shape)
         return svd(Q)[0][:, self.m:]
 
     def get_dimension(self):
         """
-        Returns dimension of the manifold d
+        Returns dimension of the manifold d.
         """
         return self.d
     
     def get_codimension(self):
         """
-        Returns co-dimension of the manifold d
+        Returns co-dimension of the manifold d.
         """
         return self.m
 
