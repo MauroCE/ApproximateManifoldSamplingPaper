@@ -86,12 +86,64 @@ def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, seed=1234)
     N_EVALS['density'] += 1
     
     def linear_project(v, J):
-        """Projects by solving linear system."""
+        """Projects by solving linear system.
+        
+        Arguments: 
+        
+        :param v: Velocity to be projected.
+        :type v: ndarray
+        
+        :param J: Jacobian identifying on where `v` should be projected to.
+        :type J: ndarray
+        
+        Returns:
+        
+        :param v_projected: Velocity projected onto normal space identified by `J`.
+        :type v_projected: ndarray
+        """
         return J.T @ solve(J@J.T, J@v)
 
     # Constrained Step Function
     def constrained_rwm_step(x, v, tol, maxiter, Jx, norm_ord=norm_ord):
-        """Used for both forward and backward. See Manifold-Lifting paper."""
+        """One step of the constrained Leapfrog integrator for C-RWM.
+        
+        Arguments: 
+        
+        :param x: Initial position.
+        :type x: ndarray
+        
+        :param v: Initial velocity.
+        :type v: ndarray
+        
+        :param tol: Tolerance used to check projection onto manifold.
+        :type tol: float
+        
+        :param maxiter: Maximum number of iterations allowed to project onto manifold. 
+        :type maxiter: int
+        
+        :param Jx: Jacobian evaluated at initial position `x`.
+        :type Jx: ndarray
+        
+        :param norm_ord: Order of the norm used to check convergence of the projection. Can be either `2` or `np.inf`.
+        :type norm_ord: float
+        
+        Returns:
+        
+        :param y: Final position on the manifold. 
+        :type y: ndarray
+        
+        :param v_projected_endposition: Final velocity, projected onto tangent space at `y`.
+        :type v_projected_endposition: ndarray
+        
+        :param Jy: Jacobian evaluated at position `y`.
+        :type Jy: ndarray
+        
+        :param flag: Flag indicating whether projection was successful (`1`) or not (`0`).
+        :type flag: int
+        
+        :param n_grad: Number of Jacobian evaluations used to project onto manifold.
+        :type n_grad: int
+        """
         # Project momentum
         v_projected = v - linear_project(v, Jx) 
         # Unconstrained position step
@@ -112,7 +164,53 @@ def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, seed=1234)
         return y, v_projected_endposition, Jy, flag, n_grad + 1
     
     def constrained_leapfrog(x0, v0, J0, B, tol, rev_tol, maxiter, norm_ord=norm_ord):
-        """Constrained Leapfrog/RATTLE."""
+        """Constrained Leapfrog/RATTLE for C-RWM.
+        
+        Arguments: 
+        
+        :param x0: Initial position.
+        :type x0: ndarray
+        
+        :param v0: Initial velocity.
+        :type v0: ndarray
+        
+        :param J0: Jacobian at initial position `J(x0)`.
+        :type J0: ndarray
+        
+        :param B: Number of Leapfrog steps. 
+        :type B: int
+        
+        :param tol: Tolerance for checking forward projection was successful.
+        :type tol: float
+        
+        :param rev_tol: Tolerance for checking backward projection was successful. 
+        :type rev_tol: float
+        
+        :param maxiter: Maximum number of iterations allowed in both forward and backward projections.
+        :type maxiter: int
+        
+        :param norm_ord: Order of the norm used to check convergence of both forward and backward projections. 
+                         Can be either `2` or `np.inf`.
+        :type norm_ord: float
+
+        Returns:
+
+        :param x: Final position.
+        :type x: ndarray
+
+        :param v: Final velocity
+        :type v: ndarray
+
+        :param J: Jacobian evaluated at final position. 
+        :type J: ndarray
+
+        :param successful: Boolean flag indicating whether both projections were successful.
+        :type successful: bool
+
+        :param n_jacobian_evaluations: Number of Jacobian evaluations used in forward and backward projections
+                                       combined. 
+        :type n_jacobian_evaluations: int
+        """
         successful = True
         n_jacobian_evaluations = 0
         x, v, J = x0, v0, J0
