@@ -23,8 +23,11 @@ THUG09_CC_100 = load(folder + '/THUG09_CC_100.npy')
 THUG09_AP_100 = load(folder + '/THUG09_AP_100.npy')
 THUG99_CC_100 = load(folder + '/THUG99_CC_100.npy')
 THUG99_AP_100 = load(folder + '/THUG99_AP_100.npy')
-# CRWM_CC_100 = load(folder + '/CRWM_CC_100.npy')
-# CRWM_AP_100 = load(folder + '/CRWM_AP_100.npy')
+CRWM_CC_100 = load(folder + '/CRWM_CC_100.npy')
+CRWM_AP_100 = load(folder + '/CRWM_AP_100.npy')
+# m = 200
+THUG00_CC_200 = load(folder + '/THUG00_CC_200.npy')
+THUG00_AP_200 = load(folder + '/THUG00_AP_200.npy')
 # Epsilons
 EPSILONS = load(folder + '/EPSILONS.npy')
 
@@ -72,9 +75,9 @@ ax[m50].plot(EPSILONS, show_only_positive_ap(THUG99_CC_50, THUG99_AP_50, 0), lab
 ax[m50].plot(EPSILONS, show_only_positive_ap(THUG99_CC_50, THUG99_AP_50, 1), label='10α2', marker='^', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 ax[m50].plot(EPSILONS, show_only_positive_ap(THUG99_CC_50, THUG99_AP_50, 2), label='100α2', marker='^', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 # CRWM
-ax[m50].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 0), label='1C', color='lightgray', lw=CRWM_LINEWIDTH)
-ax[m50].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 1), label='10C', color='darkgrey', lw=CRWM_LINEWIDTH)
-ax[m50].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 2), label='50C', color='dimgrey', lw=CRWM_LINEWIDTH)
+ax[m50].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 0), label='1C', color='lightgray', lw=CRWM_LINEWIDTH, marker='x', markersize=MARKERSIZE, markeredgecolor='k', markeredgewidth=MARKEREDGEWIDTH)
+ax[m50].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 1), label='10C', color='darkgrey', lw=CRWM_LINEWIDTH, marker='x', markersize=MARKERSIZE, markeredgecolor='k', markeredgewidth=MARKEREDGEWIDTH)
+ax[m50].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_50, CRWM_AP_50, EPSILONS, 2), label='50C', color='dimgrey', lw=CRWM_LINEWIDTH, marker='x', markersize=MARKERSIZE, markeredgecolor='k', markeredgewidth=MARKEREDGEWIDTH)
 ### m = 100
 # α = 0.0
 ax[m100].plot(EPSILONS, show_only_positive_ap(THUG00_CC_100, THUG00_AP_100, 0), label='1T', marker='o', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
@@ -88,6 +91,15 @@ ax[m100].plot(EPSILONS, show_only_positive_ap(THUG09_CC_100, THUG09_AP_100, 2), 
 ax[m100].plot(EPSILONS, show_only_positive_ap(THUG99_CC_100, THUG99_AP_100, 0), label='1α', marker='*', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 ax[m100].plot(EPSILONS, show_only_positive_ap(THUG99_CC_100, THUG99_AP_100, 1), label='10α', marker='*', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 ax[m100].plot(EPSILONS, show_only_positive_ap(THUG99_CC_100, THUG99_AP_100, 2), label='50α', marker='*', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+# C-RWM
+ax[m100].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_100, CRWM_AP_100, EPSILONS, 0), label='1C', marker='x', markersize=MARKERSIZE, markeredgecolor='k', markeredgewidth=MARKEREDGEWIDTH, color='lightgray', lw=CRWM_LINEWIDTH)
+ax[m100].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_100, CRWM_AP_100, EPSILONS, 1), label='10C', marker='x', markersize=MARKERSIZE, markeredgecolor='k', markeredgewidth=MARKEREDGEWIDTH, color='darkgrey', lw=CRWM_LINEWIDTH)
+ax[m100].plot(EPSILONS, show_only_positive_ap_crwm(CRWM_CC_100, CRWM_AP_100, EPSILONS, 2), label='50C', marker='x', markersize=MARKERSIZE, markeredgecolor='k', markeredgewidth=MARKEREDGEWIDTH, color='dimgrey', lw=CRWM_LINEWIDTH)
+### m = 200
+# α = 0.0
+ax[m200].plot(EPSILONS, show_only_positive_ap(THUG00_CC_200, THUG00_AP_200, 0), label='1T', marker='o', color='lightgray', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax[m200].plot(EPSILONS, show_only_positive_ap(THUG00_CC_200, THUG00_AP_200, 1), label='10T', marker='o', color='darkgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
+ax[m200].plot(EPSILONS, show_only_positive_ap(THUG00_CC_200, THUG00_AP_200, 2), label='50T', marker='o', color='dimgrey', markersize=MARKERSIZE, markeredgecolor='k', lw=LINEWIDTH, markeredgewidth=MARKEREDGEWIDTH)
 # Prettify
 for i in range(3):
     # Set xticks
@@ -103,9 +115,10 @@ ax[0].set_ylabel("minESS/runtime", fontsize=20)
 triangle = mlines.Line2D([], [], markeredgecolor='k', color='white', marker='^', linestyle='None', markersize=10, label='α=0.99')
 star     = mlines.Line2D([], [], markeredgecolor='k', color='white', marker='*', linestyle='None', markersize=10, label='α=0.9')
 circle   = mlines.Line2D([], [], markeredgecolor='k', color='white', marker='o', linestyle='None', markersize=10, label='α=0')
+cross    = mlines.Line2D([], [], markeredgecolor='k', color='white', marker='x', linestyle='None', markersize=10, label='C-RWM')
 lightline  = mlines.Line2D([], [], color='lightgray', linestyle='-', label='B=1')
 mediumline = mlines.Line2D([], [], color='darkgrey', linestyle='-', label='B=10')
 darkline   = mlines.Line2D([], [], color='dimgrey', linestyle='-', label='B=50')
-ax[0].legend(handles=[circle, star, triangle, lightline, mediumline, darkline], loc='lower right')
+ax[0].legend(handles=[circle, star, triangle, cross, lightline, mediumline, darkline], loc='lower right')
 plt.tight_layout()
 plt.show()
