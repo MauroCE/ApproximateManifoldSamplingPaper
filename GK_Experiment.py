@@ -193,7 +193,7 @@ if __name__ == "__main__":
     N_CHAINS = 4
     N_SAMPLES_PER_CHAIN = 1000
     STEP_SIZE = 0.01
-    SEEDS_FOR_CHAINS = [1111, 2222, 3333, 4444]
+    SEEDS_FOR_CHAINS = [1723, 1923, 6482, 8921] #[1111, 2222, 3333, 4444]
     EPSILONS = generate_powers_of_ten(0, -8)   # array([1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001])
     assert len(SEEDS_FOR_CHAINS) == N_CHAINS, "Number of seeds and number of chains differs."
     
@@ -240,10 +240,10 @@ if __name__ == "__main__":
     # THUG99_CC_100, THUG99_AP_100 = compute_average_computational_cost_thug(SETTINGS_100, α=0.99)
     # CRWM_CC_100, CRWM_AP_100     = compute_average_computational_cost_crwm(SETTINGS_100, tol=1e-14, rev_tol=1e-14)
     ### m = 200
-    THUG00_CC_200, THUG00_AP_200 = compute_average_computational_cost_thug(SETTINGS_200, α=0.0)
+    # THUG00_CC_200, THUG00_AP_200 = compute_average_computational_cost_thug(SETTINGS_200, α=0.0)
     # THUG09_CC_200, THUG09_AP_200 = compute_average_computational_cost_thug(SETTINGS_200, α=0.9)
     # THUG99_CC_200, THUG99_AP_200 = compute_average_computational_cost_thug(SETTINGS_200, α=0.99)
-    # CRWM_CC_200, CRWM_AP_200     = compute_average_computational_cost_crwm(SETTINGS_200, tol=1e-14, rev_tol=1e-14)
+    CRWM_CC_200, CRWM_AP_200     = compute_average_computational_cost_crwm(SETTINGS_200, tol=1e-14, rev_tol=1e-14)
 
     # Store results
     folder = "GK_Experiment"
@@ -266,9 +266,14 @@ if __name__ == "__main__":
     # save(folder + '/CRWM_CC_100.npy', CRWM_CC_100)
     # save(folder + '/CRWM_AP_100.npy', CRWM_AP_100)
     # m = 200
-    save(folder + '/THUG00_CC_200.npy', THUG00_CC_200)
-    save(folder + '/THUG00_AP_200.npy', THUG00_AP_200)
-
+    # save(folder + '/THUG00_CC_200.npy', THUG00_CC_200)
+    # save(folder + '/THUG00_AP_200.npy', THUG00_AP_200)
+    # save(folder + '/THUG09_CC_200.npy', THUG09_CC_200)
+    # save(folder + '/THUG09_AP_200.npy', THUG09_AP_200)
+    # save(folder + '/THUG99_CC_200.npy', THUG99_CC_200)
+    # save(folder + '/THUG99_AP_200.npy', THUG99_AP_200)
+    save(folder + '/CRWM_CC_200.npy', CRWM_CC_200)
+    save(folder + '/CRWM_AP_200.npy', CRWM_AP_200)
 
     # epsilons
     save(folder + '/EPSILONS.npy', EPSILONS)
