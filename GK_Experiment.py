@@ -2,14 +2,16 @@
 Reproduces the G-and-K distribution inference problem.
 """
 from numpy.random import default_rng
-from numpy import concatenate, exp, array, zeros, eye, save
+from numpy import concatenate, exp, array, zeros, save
 from scipy.stats import multivariate_normal as MVN
 from scipy.special import ndtri
 from Manifolds import GKManifold
 from TangentialHug import THUG
 from ConstrainedRWM import CRWM
 from HelperFunctions import compute_arviz_miness_runtime, generate_powers_of_ten
+from RWM import RWM
 import time 
+import os
 
 
 def data_generator(θ0, m, seed):
@@ -61,7 +63,9 @@ def generate_setting(m, ϵs, Bs, δ, n_chains, n_samples, seeds):
     :param n_samples: Number of samples computed for each chain.
     :type n_samples: int
     
-    :param seeds: List of seeds. Each seed is used for the corresponding chain.
+    :param seeds: List of seeds. Each seed is used for the corresponding chain. The seed is used in two ways.
+                  It is used to generate the initial point xi0 for each chain, and then used to generate all the 
+                  random numbers in the algorithm itself.
     :type seeds: list
     
     Returns:
@@ -70,22 +74,25 @@ def generate_setting(m, ϵs, Bs, δ, n_chains, n_samples, seeds):
     :type settings_dict: dict
     """
     θ0        = array([3.0, 1.0, 2.0, 0.5])      # True parameter value on U(0, 10) scale.
-    d         = 4 + m                            # Dimensionality of ξ=(θ, z)
-    ystar     = data_generator(θ0, m, seed=1234) # Observed data
+    ystar     = data_generator(θ0, m, seed=1234) # Observed data is always the same.
     manifold  = GKManifold(ystar)
-    ξ0        = manifold.find_point_on_manifold_from_θ(θfixed=ndtri(θ0/10), ϵ=1e-5, maxiter=5000, tol=1e-15)
+    rngs = [default_rng(seed=seed) for seed in seeds] 
+    ξ0s       = manifold.find_points_on_manifold_from_θ(θfixed=ndtri(θ0/10), ϵ=1e-5, rngs=rngs, maxiter=5000, tol=1e-15)
+    # Check dimensionality of ξ0s
+    assert ξ0s.shape == (n_chains, m + 4), "Shape of ξ0s is {}".format(ξ0s.shape)
     return {
         'θ0': θ0,
         'm' : m,
         'ystar': ystar,
-        'ξ0': ξ0,
+        'ξ0s': ξ0s,
         'ϵs': ϵs,
         'Bs': Bs,
         'δ': δ,
         'n_chains': n_chains,
         'n_samples': n_samples,
         'manifold': manifold,
-        'seeds': seeds
+        'seeds': seeds,
+        'rngs': rngs
     }
 
 
@@ -112,12 +119,12 @@ def compute_average_computational_cost_thug(SETTINGS, α, method='linear'):
     :param THUG_AP: Array of shape `(n_epsilons, n_Bs)` containing average acc probability for grid of epsilon-B values.
     :type THUG_AP: ndarray
     """
-    ξ0, ϵs, Bs, N_samples = SETTINGS['ξ0'], SETTINGS['ϵs'], SETTINGS['Bs'], SETTINGS['n_samples']
+    ξ0s, ϵs, Bs, N_samples = SETTINGS['ξ0s'], SETTINGS['ϵs'], SETTINGS['Bs'], SETTINGS['n_samples']
     n_ϵ = len(ϵs)
     n_B = len(Bs)
     n_chains = SETTINGS['n_chains']
     manifold = SETTINGS['manifold']
-    seeds = SETTINGS['seeds']
+    rngs = SETTINGS['rngs']
     δ = SETTINGS['δ']
     THUG_CC = zeros((n_ϵ, n_B))
     THUG_AP = zeros((n_ϵ, n_B))
@@ -130,7 +137,7 @@ def compute_average_computational_cost_thug(SETTINGS, α, method='linear'):
                 # Store the chain and average the times and acceptance probabilities
                 logηϵ = manifold.generate_logηϵ(ϵ)  
                 start_time = time.time()
-                samples, acceptances = THUG(x0=ξ0, T=B*δ, B=B, N=N_samples, α=α, logpi=logηϵ, jac=manifold.fullJacobian, method=method, seed=seeds[chain_ix])
+                samples, acceptances = THUG(x0=ξ0s[chain_ix], T=B*δ, B=B, N=N_samples, α=α, logpi=logηϵ, jac=manifold.fullJacobian, method=method, rng=rngs[chain_ix])
                 runtime = time.time() - start_time
                 chains.append(samples)
                 times.append(runtime)
@@ -166,10 +173,10 @@ def compute_average_computational_cost_crwm(SETTINGS, tol=1e-14, rev_tol=1e-14, 
     :param CRWM_AP: Array of shape `(n_Bs)` containing average acceptance probability for the list of B values.
     :type CRWM_AP: ndarray
     """
-    ξ0, Bs, n_chains = SETTINGS['ξ0'], SETTINGS['Bs'], SETTINGS['n_chains']
+    ξ0s, Bs, n_chains = SETTINGS['ξ0s'], SETTINGS['Bs'], SETTINGS['n_chains']
     δ, N_samples     = SETTINGS['δ'], SETTINGS['n_samples']
     manifold = SETTINGS['manifold']
-    seeds = SETTINGS['seeds']
+    rngs = SETTINGS['rngs']
     CRWM_CC = zeros(len(Bs))
     CRWM_AP = zeros(len(Bs))
     for B_ix, B in enumerate(Bs):
@@ -178,7 +185,7 @@ def compute_average_computational_cost_crwm(SETTINGS, tol=1e-14, rev_tol=1e-14, 
         avg_ap = 0.0
         for chain_ix in range(n_chains):
             start_time = time.time()
-            samples, _, acceptances = CRWM(ξ0, manifold, N_samples, T=B*δ, B=B, tol=tol, rev_tol=rev_tol, maxiter=maxiter, seed=seeds[chain_ix])
+            samples, _, acceptances = CRWM(ξ0s[chain_ix], manifold, N_samples, T=B*δ, B=B, tol=tol, rev_tol=rev_tol, maxiter=maxiter, seed=rngs[chain_ix])
             chains.append(samples)
             times.append(time.time() - start_time)
             avg_ap += (acceptances.mean() / n_chains)
@@ -188,17 +195,56 @@ def compute_average_computational_cost_crwm(SETTINGS, tol=1e-14, rev_tol=1e-14, 
     return CRWM_CC, CRWM_AP
 
 
+def check_which_epsilon_RWM(ξ0_best_eps, B_best_eps, δ_best_eps, ϵs, manifold_best_eps, N=1000):
+    """Can be used to check which epsilon allows a non-zero acceptance probability."""
+    ap = {}
+    for ϵ in ϵs:
+        logηϵ = manifold_best_eps.generate_logηε(ϵ)
+        ap[ϵ] = RWM(ξ0_best_eps, B_best_eps*δ_best_eps, N, logηϵ)[1].mean()*100
+    return ap
+
+
+def check_which_epsilon_THUG(ξ0_best_eps, B_best_eps, δ_best_eps, ϵs, manifold_best_eps, N=1000, α=0.0):
+    """Same as above."""
+    ap = {}
+    for ϵ in ϵs:
+        logηϵ = manifold_best_eps.generate_logηε(ϵ)
+        ap[ϵ] = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N, α, logηϵ, manifold_best_eps.fullJacobian, method='linear')[1].mean()*100
+    return ap
+
+
+def find_best_epsilon(ap_dictionary, threshold=10.0):
+    """Finds smallest epsilon for which acceptance probability is above threshold."""
+    epsilons = sorted(list(ap_dictionary.keys()), reverse=True)
+    above_threshold = [epsilon for epsilon in epsilons if ap_dictionary[epsilon] > threshold]
+    smallest_epsilon_above_threshold = above_threshold[-1]
+    return smallest_epsilon_above_threshold
+
+def find_initial_point_for_best_epsilon(rng=None):
+    """Finds initial point to be used for best-epsilon plot."""
+    θ0        = array([3.0, 1.0, 2.0, 0.5])          # True parameter value
+    ystar     = data_generator(θ0, m=50, seed=1234)  # Generate true data.
+    θ0_normal = ndtri(θ0/10)                         # Transform true parameter in N(0, 1) space
+    GK        = GKManifold(ystar=ystar)              # Instantiate Manifold
+    ξ0_be     = GK.find_point_on_manifold_from_θ(
+        θfixed=θ0_normal, 
+        ϵ=1e-5, 
+        maxiter=5000, 
+        tol=1e-15,
+        rng=rng
+    )
+    return ξ0_be
+    
+
 if __name__ == "__main__":
     # Settings
     N_CHAINS = 4
     N_SAMPLES_PER_CHAIN = 1000
     STEP_SIZE = 0.01
-    SEEDS_FOR_CHAINS = [1723, 1923, 6482, 8921] #[1111, 2222, 3333, 4444]
-    EPSILONS = generate_powers_of_ten(0, -8)   # array([1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001])
+    SEEDS_FOR_CHAINS = [1122, 2233, 3344, 4455] #[1723, 1923, 6482, 8921] #[1111, 2222, 3333, 4444]
+    EPSILONS = generate_powers_of_ten(0, -8)   
     assert len(SEEDS_FOR_CHAINS) == N_CHAINS, "Number of seeds and number of chains differs."
     
-
-    ### Dimensionality of the data: 50
     SETTINGS_50 = generate_setting(
         m=50,
         ϵs=EPSILONS,
@@ -230,51 +276,109 @@ if __name__ == "__main__":
     )
 
     ### m = 50
-    # THUG00_CC_50, THUG00_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.0)
-    # THUG09_CC_50, THUG09_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.9)
-    # THUG99_CC_50, THUG99_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.99)
-    # CRWM_CC_50, CRWM_AP_50     = compute_average_computational_cost_crwm(SETTINGS_50, tol=1e-14, rev_tol=1e-14)
+    THUG00_CC_50, THUG00_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.0)
+    THUG09_CC_50, THUG09_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.9)
+    THUG99_CC_50, THUG99_AP_50 = compute_average_computational_cost_thug(SETTINGS_50, α=0.99)
+    CRWM_CC_50, CRWM_AP_50     = compute_average_computational_cost_crwm(SETTINGS_50, tol=1e-14, rev_tol=1e-14)
+
     ### m = 100
     # THUG00_CC_100, THUG00_AP_100 = compute_average_computational_cost_thug(SETTINGS_100, α=0.0)
     # THUG09_CC_100, THUG09_AP_100 = compute_average_computational_cost_thug(SETTINGS_100, α=0.9)
     # THUG99_CC_100, THUG99_AP_100 = compute_average_computational_cost_thug(SETTINGS_100, α=0.99)
     # CRWM_CC_100, CRWM_AP_100     = compute_average_computational_cost_crwm(SETTINGS_100, tol=1e-14, rev_tol=1e-14)
+
     ### m = 200
     # THUG00_CC_200, THUG00_AP_200 = compute_average_computational_cost_thug(SETTINGS_200, α=0.0)
     # THUG09_CC_200, THUG09_AP_200 = compute_average_computational_cost_thug(SETTINGS_200, α=0.9)
     # THUG99_CC_200, THUG99_AP_200 = compute_average_computational_cost_thug(SETTINGS_200, α=0.99)
-    CRWM_CC_200, CRWM_AP_200     = compute_average_computational_cost_crwm(SETTINGS_200, tol=1e-14, rev_tol=1e-14)
-
+    # CRWM_CC_200, CRWM_AP_200     = compute_average_computational_cost_crwm(SETTINGS_200, tol=1e-14, rev_tol=1e-14)
+    
+    ### Best Epsilon for m=50
+    # Common settings
+    # ξ0_best_eps = find_initial_point_for_best_epsilon()
+    # δ_best_eps  = 0.04
+    # B_best_eps  = 5
+    # ϵs_best_eps = [10.0, *SETTINGS_50['ϵs']]
+    # manifold_best_eps = GKManifold(SETTINGS_50['ystar'])
+    # N_best_eps = 50000    # Number of samples
+    # # Find best epsilon for RWM and sample
+    # ap_RWM = check_which_epsilon_RWM(ξ0_best_eps, B_best_eps, δ_best_eps, ϵs_best_eps, manifold_best_eps, N=1000)
+    # best_eps_RWM = find_best_epsilon(ap_RWM, threshold = 0)
+    # logηϵ_RWM = manifold_best_eps.generate_logηε(best_eps_RWM)   # Filamentary distribution
+    # sRWM_best_eps, aRWM_best_eps = RWM(ξ0_best_eps, B_best_eps*δ_best_eps, N_best_eps, logηϵ_RWM, rng=SETTINGS_50['rngs'][0])
+    # # Find best epsilon for THUG (alpha=0.0) and sample
+    # ap_thug00 = check_which_epsilon_THUG(ξ0_best_eps, B_best_eps, δ_best_eps, ϵs_best_eps, manifold_best_eps, N=1000, α=0.0)
+    # best_eps_THUG00 = find_best_epsilon(ap_thug00, threshold = 10)
+    # logηϵ_THUG00 = manifold_best_eps.generate_logηε(best_eps_THUG00)
+    # sTHUG00_best_eps, aTHUG00_best_eps = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N_best_eps, α=0.0, logpi=logηϵ_THUG00, jac=manifold_best_eps.fullJacobian, method='linear', rng=SETTINGS_50['rngs'][0])
+    # # Find best epsilon for THUG (alpha=0.999) and sample
+    # ap_thug999 = check_which_epsilon_THUG(ξ0_best_eps, B_best_eps, δ_best_eps, ϵs_best_eps, manifold_best_eps, N=1000, α=0.999)
+    # best_eps_THUG999 = find_best_epsilon(ap_thug999, threshold = 10)
+    # logηϵ_THUG999 = manifold_best_eps.generate_logηε(best_eps_THUG999)
+    # sTHUG999_best_eps, aTHUG999_best_eps = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N_best_eps, α=0.999, logpi=logηϵ_THUG999, jac=manifold_best_eps.fullJacobian, method='linear', rng=SETTINGS_50['rngs'][0])
+    # # Compute samples for CRWM (no need to find best epsilon)
+    # sCRWM_best_eps, _ , aCRWM_best_eps = CRWM(ξ0_best_eps, manifold_best_eps, N_best_eps, T=B_best_eps*δ_best_eps, B=B_best_eps, tol=1e-14, rev_tol=1e-14, maxiter=50, rng=SETTINGS_50['rngs'][0])
     # Store results
-    folder = "GK_Experiment"
+    mainfolder = "GK_Experiment"
+    subfolder = "_".join([str(seed) for seed in SEEDS_FOR_CHAINS])
+    folder = os.path.join(mainfolder, subfolder)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
     # m = 50
-    # save(folder + '/THUG00_CC_50.npy', THUG00_CC_50)
-    # save(folder + '/THUG00_AP_50.npy', THUG00_AP_50)
-    # save(folder + '/THUG09_CC_50.npy', THUG09_CC_50)
-    # save(folder + '/THUG09_AP_50.npy', THUG09_AP_50)
-    # save(folder + '/THUG99_CC_50.npy', THUG99_CC_50)
-    # save(folder + '/THUG99_AP_50.npy', THUG99_AP_50)
-    # save(folder + '/CRWM_CC_50.npy', CRWM_CC_50)
-    # save(folder + '/CRWM_AP_50.npy', CRWM_AP_50)
+    save(os.path.join(folder, 'THUG00_CC_50.npy'), THUG00_CC_50)
+    save(os.path.join(folder, 'THUG00_AP_50.npy'), THUG00_AP_50)
+    save(os.path.join(folder, 'THUG00_CC_50.npy'), THUG00_CC_50)
+    save(os.path.join(folder, 'THUG00_AP_50.npy'), THUG00_AP_50)
+    save(os.path.join(folder, 'THUG09_CC_50.npy'), THUG09_CC_50)
+    save(os.path.join(folder, 'THUG09_AP_50.npy'), THUG09_AP_50)
+    save(os.path.join(folder, 'THUG99_CC_50.npy'), THUG99_CC_50)
+    save(os.path.join(folder, 'THUG99_AP_50.npy'), THUG99_AP_50)
+    save(os.path.join(folder, 'CRWM_CC_50.npy'), CRWM_CC_50)
+    save(os.path.join(folder, 'CRWM_AP_50.npy'), CRWM_AP_50)
+
     # m = 100
-    # save(folder + '/THUG00_CC_100.npy', THUG00_CC_100)
-    # save(folder + '/THUG00_AP_100.npy', THUG00_AP_100)
-    # save(folder + '/THUG09_CC_100.npy', THUG09_CC_100)
-    # save(folder + '/THUG09_AP_100.npy', THUG09_AP_100)
-    # save(folder + '/THUG99_CC_100.npy', THUG99_CC_100)
-    # save(folder + '/THUG99_AP_100.npy', THUG99_AP_100)
-    # save(folder + '/CRWM_CC_100.npy', CRWM_CC_100)
-    # save(folder + '/CRWM_AP_100.npy', CRWM_AP_100)
+    # save(os.path.join(folder, 'THUG00_CC_100.npy'), THUG00_CC_100)
+    # save(os.path.join(folder, 'THUG00_AP_100.npy'), THUG00_AP_100)
+    # save(os.path.join(folder, '/THUG09_CC_100.npy'), THUG09_CC_100)
+    # save(os.path.join(folder, 'THUG09_AP_100.npy'), THUG09_AP_100)
+    # save(os.path.join(folder, 'THUG99_CC_100.npy'), THUG99_CC_100)
+    # save(os.path.join(folder, 'THUG99_AP_100.npy'), THUG99_AP_100)
+    # save(os.path.join(folder, 'CRWM_CC_100.npy'), CRWM_CC_100)
+    # save(os.path.join(folder, 'CRWM_AP_100.npy'), CRWM_AP_100)
+
     # m = 200
-    # save(folder + '/THUG00_CC_200.npy', THUG00_CC_200)
-    # save(folder + '/THUG00_AP_200.npy', THUG00_AP_200)
-    # save(folder + '/THUG09_CC_200.npy', THUG09_CC_200)
-    # save(folder + '/THUG09_AP_200.npy', THUG09_AP_200)
-    # save(folder + '/THUG99_CC_200.npy', THUG99_CC_200)
-    # save(folder + '/THUG99_AP_200.npy', THUG99_AP_200)
-    save(folder + '/CRWM_CC_200.npy', CRWM_CC_200)
-    save(folder + '/CRWM_AP_200.npy', CRWM_AP_200)
+    # save(os.path.join(folder, 'THUG00_CC_200.npy'), THUG00_CC_200)
+    # save(os.path.join(folder, 'THUG00_AP_200.npy'), THUG00_AP_200)
+    # save(os.path.join(folder, 'THUG09_CC_200.npy'), THUG09_CC_200)
+    # save(os.path.join(folder, 'THUG09_AP_200.npy'), THUG09_AP_200)
+    # save(os.path.join(folder, 'THUG99_CC_200.npy'), THUG99_CC_200)
+    # save(os.path.join(folder, 'THUG99_AP_200.npy'), THUG99_AP_200)
+    # save(os.path.join(folder, 'CRWM_CC_200.npy'), CRWM_CC_200)
+    # save(os.path.join(folder, 'CRWM_AP_200.npy'), CRWM_AP_200)
 
-    # epsilons
-    save(folder + '/EPSILONS.npy', EPSILONS)
+    # Epsilons
+    # save(os.path.join(folder, 'EPSILONS.npy'), EPSILONS)
 
+    # Seeds
+    save(os.path.join(folder, 'SEEDS.npy'), SEEDS_FOR_CHAINS)
+
+    # Best epsilon samples for RWM
+    save(os.path.join(folder, 'RWM_BEST_EPSILON_SAMPLES.npy'), sRWM_best_eps)
+    save(os.path.join(folder, 'RWM_BEST_EPSILON_AP.npy'), aRWM_best_eps)
+    save(os.path.join(folder, 'RWM_BEST_EPSILON.npy'), best_eps_RWM)
+    save(os.path.join(folder, 'RWM_AP_DICTIONARY.npy'), ap_RWM)
+
+    # Best epsilon samples for THUG
+    save(os.path.join(folder, 'THUG00_BEST_EPSILON_SAMPLES.npy'), sTHUG00_best_eps)
+    save(os.path.join(folder, 'THUG00_BEST_EPSILON_AP.npy'), aTHUG00_best_eps)
+    save(os.path.join(folder, 'THUG00_BEST_EPSILON.npy'), best_eps_THUG00)
+    save(os.path.join(folder, 'THUG00_AP_DICTIONARY.npy'), ap_thug00)
+    save(os.path.join(folder, 'THUG999_BEST_EPSILON_SAMPLES.npy'), sTHUG999_best_eps)
+    save(os.path.join(folder, 'THUG999_BEST_EPSILON_AP.npy'), aTHUG999_best_eps)
+    save(os.path.join(folder, 'THUG999_BEST_EPSILON.npy'), best_eps_THUG999)
+    save(os.path.join(folder, 'THUG999_AP_DICTIONARY.npy'), ap_thug999)
+
+    # Best epsilon samples for CRWM
+    save(os.path.join(folder, 'CRWM_BEST_EPSILON_SAMPLES.npy'), sCRWM_best_eps)
+    save(os.path.join(folder, 'CRWM_BEST_EPSILON_AP.npy'), aCRWM_best_eps)

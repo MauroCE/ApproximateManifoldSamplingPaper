@@ -1,10 +1,10 @@
 from numpy import inf, zeros, log, finfo
-from numpy.random import default_rng
+from numpy.random import default_rng, randint
 from numpy.linalg import solve, norm, cond
 import scipy.linalg as la
 
 
-def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, seed=1234):
+def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, rng=None):
     """Constrained Random Walk with RATTLE integration.
     
     Arguments
@@ -36,8 +36,8 @@ def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, seed=1234)
     :param norm_ord: Order of the norm used to check convergence. Should be either `2` or `np.inf`
     :type norm_ord: float
 
-    :param seed: Seed of the random number generator. Used for reproducibility.
-    :type seed: int
+    :param rng: Random Number Generator, typically an instance of `np.random.default_rng(seed)`.
+    :type rng: np.random.Generator
 
     Returns
     
@@ -53,13 +53,13 @@ def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, seed=1234)
     assert type(B) == int
     assert norm_ord in [2, inf]
     assert len(x0) == manifold.n, "Initial point has wrong dimension."
+    if rng is None:
+        rng = default_rng(seed=randint(low=1000, high=9999))
     # Check arguments
     n = int(n)  
     B = int(B)
     δ = T / B
     d, m = manifold.get_dimension(), manifold.get_codimension()
-    # Set random number generator
-    rng = default_rng(seed=seed)
 
     # Initial point on the manifold
     x = x0

@@ -1,12 +1,12 @@
 from numpy import zeros, log, vstack, zeros_like, eye
-from numpy.random import default_rng
+from numpy.random import default_rng, randint
 from numpy.linalg import solve
 from scipy.linalg import qr, lstsq
 from scipy.stats import multivariate_normal as MVN
 from warnings import catch_warnings, filterwarnings
 
 
-def THUG(x0, T, B, N, α, logpi, jac, method='qr', seed=1234):
+def THUG(x0, T, B, N, α, logpi, jac, method='qr', rng=None, safe=True):
     """Tangential Hug Sampler  (THUG). Two projection methods available:
         - 'qr': projects onto row space of Jacobian using QR decomposition.
         - 'linear': solves a linear system to project.
@@ -40,8 +40,12 @@ def THUG(x0, T, B, N, α, logpi, jac, method='qr', seed=1234):
                    `'QR'` or `'linear'`.
     :type method: string
 
-    :param seed: Seed of the random number generator. Used for reproducibility.
-    :type seed: int
+    :param rng: Random number generator for reproducibility, typically an instance of `np.random.default_rng(seed)`.
+    :type rng: int
+
+    :param safe: Whether to safely compute the Jacobian or not. If `True`, we do not allow any Runtime Warning or 
+                 Overflow of any kind and raise an error. Otherwise, we let the algorithm run.
+    :type safe: bool
 
     Returns: 
 
@@ -52,7 +56,8 @@ def THUG(x0, T, B, N, α, logpi, jac, method='qr', seed=1234):
     :type acceptances: ndarray
     """
     assert method == 'qr' or method == 'linear' or method == 'lstsq'
-    rng = default_rng(seed)
+    if rng is None:
+        rng = default_rng(seed=randint(low=1000, high=9999))
     def qr_project(v, J):
         """Projects using QR decomposition."""
         Q, _ = qr(J.T, mode='economic')
@@ -70,7 +75,7 @@ def THUG(x0, T, B, N, α, logpi, jac, method='qr', seed=1234):
     else:
         project = lstsq_project
     # Jacobian function raising an error for RuntimeWarning
-    def safe_jac(x):
+    def safe_jacobian_function(x):
         """Raises an error when a RuntimeWarning appears."""
         while catch_warnings():
             filterwarnings('error')
@@ -78,6 +83,7 @@ def THUG(x0, T, B, N, α, logpi, jac, method='qr', seed=1234):
                 return jac(x)
             except RuntimeWarning:
                 raise ValueError("Jacobian computation failed due to Runtime Warning.")
+    safe_jac = safe_jacobian_function if safe else jac
     samples, acceptances = x0, zeros(N)
     q = MVN(mean=zeros_like(x0), cov=eye(len(x0)))
     # Compute initial Jacobian. 

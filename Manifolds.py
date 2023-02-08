@@ -188,6 +188,7 @@ class LVManifold(Manifold):
         self.z_true = np.array(z_true)  # True parameter
         self.q_dist = MVN(zeros(self.n), eye(self.n))   # proposal for THUG
         self.seeds = seeds
+        self.rngs = [default_rng(seed) for seed in self.seeds]
         self.n_chains = n_chains 
         
         # generate data
@@ -316,7 +317,7 @@ class LVManifold(Manifold):
         except ValueError as e:
             return -np.inf
         
-    def find_point_on_manifold(self, maxiter=2000, tol=1e-14, random_u2_guess=False):
+    def find_point_on_manifold(self, maxiter=2000, tol=1e-14, random_u2_guess=False, rng=None):
         """Finds a point on the Manifold with input u=[u1, u2].
         
         Arguments: 
@@ -337,14 +338,16 @@ class LVManifold(Manifold):
         :param point: Point on the manifold within tolerance `tol`. If not found, raises `ValueError`.
         :type point: ndarray
         """
-        u2_guess = randn(self.m) if random_u2_guess else zeros(self.m)
+        if rng is None:
+            rng = default_rng(seed=np.random.randint(low=1000, high=9999))
+        u2_guess = rng.normal(size=self.m) if random_u2_guess else zeros(self.m)
         i = 0
         with catch_warnings():
             filterwarnings('error')
             while i <= maxiter:
                 i += 1
                 try: 
-                    u1_init  = randn(self.d)*0.1 - 4
+                    u1_init  = rng.normal(size=self.d)*0.1 - 4 #randn(self.d)*0.1 - 4
                     function = lambda u2: self.q(np.concatenate((u1_init, u2)))
                     fprime   = lambda u2: self.J(np.concatenate((u1_init, u2)))[:, self.d:]
                     u2_found = fsolve(function, u2_guess, xtol=tol, fprime=fprime)
@@ -354,15 +357,17 @@ class LVManifold(Manifold):
                     continue
         raise ValueError("Couldn't find a point, try again.")
         
-    def find_point_on_manifold_given_u1true(self, maxiter=2000, tol=1e-14, random_u2_guess=False):
+    def find_point_on_manifold_given_u1true(self, maxiter=2000, tol=1e-14, random_u2_guess=False, rng=None):
         """Finds a point on the Manifold starting from u1_true."""
+        if rng is None:
+            rng = default_rng(seed=np.random.randint(low=1000, high=9999))
         i = 0
         with catch_warnings():
             filterwarnings('error')
             while i <= maxiter:
                 i += 1
                 try:
-                    u2_guess = randn(self.m) if random_u2_guess else zeros(self.m)
+                    u2_guess = rng.normal(size=self.m) if random_u2_guess else zeros(self.m)
                     function = lambda u2: self.q(np.concatenate((self.u1_true, u2)))
                     u2_found = fsolve(function, u2_guess, xtol=tol)
                     u_found = np.concatenate((self.u1_true, u2_found))
@@ -386,9 +391,9 @@ class LVManifold(Manifold):
         u0s = zeros((self.n_chains, self.n))
         for i in range(self.n_chains):
             if u1_true:
-                u0s[i, :] = self.find_point_on_manifold_given_u1true(maxiter=maxiter, tol=tol, random_u2_guess=random_u2_guess)
+                u0s[i, :] = self.find_point_on_manifold_given_u1true(maxiter=maxiter, tol=tol, random_u2_guess=random_u2_guess, rng=self.rngs[i])
             else:
-                u0s[i, :] = self.find_point_on_manifold(maxiter=maxiter, tol=tol, random_u2_guess=random_u2_guess)
+                u0s[i, :] = self.find_point_on_manifold(maxiter=maxiter, tol=tol, random_u2_guess=random_u2_guess, rng=self.rngs[i])
         self.u0s = u0s 
         return self.u0s
             
@@ -601,7 +606,7 @@ class GKManifold(Manifold):
         """Checks if ξ is on the ystar manifold."""
         return np.max(abs(self.q(ξ))) < tol
     
-    def find_point_on_manifold_from_θ(self, θfixed, ϵ, maxiter=2000, tol=1.49012e-08):
+    def find_point_on_manifold_from_θ(self, θfixed, ϵ, maxiter=2000, tol=1.49012e-08, rng=None):
         """Finds a point on the manifold for a fixed value of `theta`. Can be used to find a point where
         the theta is already `θ0`.
         
@@ -623,6 +628,10 @@ class GKManifold(Manifold):
 
         :param tol: Tolerance for `fsolve`. Used to find point on the manifold.
         :type tol: float
+
+        :param rng: Random Number Generator used to start the optimization. Typically it is an instance of 
+                    `np.random.default_rng(seed)` for some integer `seed`.
+        :type rng: np.random.Generator
         
         Returns:
         
@@ -633,12 +642,15 @@ class GKManifold(Manifold):
         i = 0
         log_abc_posterior = self.generate_logηϵ(ϵ)
         function = lambda z: self._q_raw_normal(concatenate((θfixed, z)))
+        # Generate a default RNG if none is provided
+        if rng is None:
+            rng = default_rng(seed=np.random.randint(low=1000, high=9999))
         with catch_warnings():
             filterwarnings('error')
             while i <= maxiter:
                 i += 1
                 try:
-                    z_guess  = randn(self.m)
+                    z_guess  = rng.normal(size=self.m) #randn(self.m)
                     z_found  = fsolve(function, z_guess, xtol=tol)
                     ξ_found  = concatenate((θfixed, z_found))
                     if not isfinite([log_abc_posterior(ξ_found)]):
@@ -648,3 +660,38 @@ class GKManifold(Manifold):
                 except RuntimeWarning:
                     continue
             raise ValueError("Couldn't find a point, try again.")
+
+        
+    def find_points_on_manifold_from_θ(self, θfixed, ϵ, rngs, maxiter=2000, tol=1.49012e-08):
+        """Generates initial points according to `self.find_point_on_manifold_from_θ` for each chain using
+        the seeds provided (one seed per chain). This allows us to have different starting points for each 
+        chain, while keeping everything reproducible.
+
+        Arguments:
+        
+        :param thetafixed: Fixed theta value used to find the initial point on the manifold. This will typically
+                           be the true value of theta.
+        :type thetafixed: ndarray
+
+        :param epsilon: Same as in `self.find_point_on_manifold_from_θ`.
+        :type epsilon: float
+
+        :param rngs: List of RNGs for different chains. There must be one RNG per chain.
+        :type rngs: np.random.Generator
+
+        :param maxiter: Same as in `self.find_point_on_manifold_from_θ`.
+        :type maxiter: int
+
+        :param tol: Same as in `self.find_point_on_manifold_from_θ`.
+        :type tol: float
+
+        Returns:
+
+        :param points: Numpy array of points on the manifold, one per chain. Each row is a point.
+        :type points: ndarray
+        """
+        points = []
+        for rng in rngs:
+            point = self.find_point_on_manifold_from_θ(θfixed, ϵ, maxiter=maxiter, tol=tol, rng=rng)
+            points.append(point)
+        return vstack(points)
