@@ -137,7 +137,7 @@ def compute_average_computational_cost_thug(SETTINGS, α, method='linear'):
                 # Store the chain and average the times and acceptance probabilities
                 logηϵ = manifold.generate_logηϵ(ϵ)  
                 start_time = time.time()
-                samples, acceptances = THUG(x0=ξ0s[chain_ix], T=B*δ, B=B, N=N_samples, α=α, logpi=logηϵ, jac=manifold.fullJacobian, method=method, rng=rngs[chain_ix])
+                samples, acceptances = THUG(x0=ξ0s[chain_ix], T=B*δ, B=B, N=N_samples, α=α, logpi=logηϵ, jac=manifold.J, method=method, rng=rngs[chain_ix])
                 runtime = time.time() - start_time
                 chains.append(samples)
                 times.append(runtime)
@@ -185,7 +185,7 @@ def compute_average_computational_cost_crwm(SETTINGS, tol=1e-14, rev_tol=1e-14, 
         avg_ap = 0.0
         for chain_ix in range(n_chains):
             start_time = time.time()
-            samples, _, acceptances = CRWM(ξ0s[chain_ix], manifold, N_samples, T=B*δ, B=B, tol=tol, rev_tol=rev_tol, maxiter=maxiter, seed=rngs[chain_ix])
+            samples, _, acceptances = CRWM(ξ0s[chain_ix], manifold, N_samples, T=B*δ, B=B, tol=tol, rev_tol=rev_tol, maxiter=maxiter, rng=rngs[chain_ix])
             chains.append(samples)
             times.append(time.time() - start_time)
             avg_ap += (acceptances.mean() / n_chains)
@@ -209,7 +209,7 @@ def check_which_epsilon_THUG(ξ0_best_eps, B_best_eps, δ_best_eps, ϵs, manifol
     ap = {}
     for ϵ in ϵs:
         logηϵ = manifold_best_eps.generate_logηε(ϵ)
-        ap[ϵ] = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N, α, logηϵ, manifold_best_eps.fullJacobian, method='linear')[1].mean()*100
+        ap[ϵ] = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N, α, logηϵ, manifold_best_eps.J, method='linear')[1].mean()*100
     return ap
 
 
@@ -310,12 +310,12 @@ if __name__ == "__main__":
     # ap_thug00 = check_which_epsilon_THUG(ξ0_best_eps, B_best_eps, δ_best_eps, ϵs_best_eps, manifold_best_eps, N=1000, α=0.0)
     # best_eps_THUG00 = find_best_epsilon(ap_thug00, threshold = 10)
     # logηϵ_THUG00 = manifold_best_eps.generate_logηε(best_eps_THUG00)
-    # sTHUG00_best_eps, aTHUG00_best_eps = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N_best_eps, α=0.0, logpi=logηϵ_THUG00, jac=manifold_best_eps.fullJacobian, method='linear', rng=SETTINGS_50['rngs'][0])
+    # sTHUG00_best_eps, aTHUG00_best_eps = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N_best_eps, α=0.0, logpi=logηϵ_THUG00, jac=manifold_best_eps.J, method='linear', rng=SETTINGS_50['rngs'][0])
     # # Find best epsilon for THUG (alpha=0.999) and sample
     # ap_thug999 = check_which_epsilon_THUG(ξ0_best_eps, B_best_eps, δ_best_eps, ϵs_best_eps, manifold_best_eps, N=1000, α=0.999)
     # best_eps_THUG999 = find_best_epsilon(ap_thug999, threshold = 10)
     # logηϵ_THUG999 = manifold_best_eps.generate_logηε(best_eps_THUG999)
-    # sTHUG999_best_eps, aTHUG999_best_eps = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N_best_eps, α=0.999, logpi=logηϵ_THUG999, jac=manifold_best_eps.fullJacobian, method='linear', rng=SETTINGS_50['rngs'][0])
+    # sTHUG999_best_eps, aTHUG999_best_eps = THUG(ξ0_best_eps, B_best_eps*δ_best_eps, B_best_eps, N_best_eps, α=0.999, logpi=logηϵ_THUG999, jac=manifold_best_eps.J, method='linear', rng=SETTINGS_50['rngs'][0])
     # # Compute samples for CRWM (no need to find best epsilon)
     # sCRWM_best_eps, _ , aCRWM_best_eps = CRWM(ξ0_best_eps, manifold_best_eps, N_best_eps, T=B_best_eps*δ_best_eps, B=B_best_eps, tol=1e-14, rev_tol=1e-14, maxiter=50, rng=SETTINGS_50['rngs'][0])
     # Store results

@@ -522,8 +522,10 @@ class GKManifold(Manifold):
         ξ = concatenate((self.G(ξ[:4]), ξ[4:])) 
         return self._q_raw_uniform(ξ)
 
-    def Q(self, ξ):
-        """Transpose of Jacobian for G and K. This is the reparametrized version. It also lacks the Jacobian `JG`."""
+    def Qf(self, ξ):
+        """Transpose of Jacobian of f in the G and K problem.
+        This is NOT the full Jacobian and corresponds to Jf.T. It it not the full Jacobian because we 
+        are using a reparametrization. It lacks the Jacobian `JG`."""
         ξ = concatenate((self.G(ξ[:4]), ξ[4:]))
         return vstack((
         ones(len(ξ[4:])),
@@ -533,20 +535,22 @@ class GKManifold(Manifold):
         diag(ξ[1]*((1+ξ[4:]**2)**(ξ[3]-1))*(((18*ξ[3] + 9)*(ξ[4:]**2) + 9)*exp(2*ξ[2]*ξ[4:]) + (8*ξ[2]*ξ[4:]**3 + (20*ξ[3] + 10)*ξ[4:]**2 + 8*ξ[2]*ξ[4:] + 10)*exp(ξ[2]*ξ[4:]) + (2*ξ[3] + 1)*ξ[4:]**2 + 1) / (5*(1 + exp(ξ[2]*ξ[4:]))**2))
     ))
     
-    def J(self, ξ):
-        """Safely computes Jacobian. This is the Jacobian of which `Q` is transpose of. Again, lacks `JG`."""
+    def Jf(self, ξ):
+        """Computes the Jacobian J_f safely. Notice, this is not the full Jacobian, since we are using 
+        a reparametrization. The full Jacobian is Jf@JGbar. 
+        This is the Jacobian of which `Q` is transpose of. Again, lacks `JG`."""
         with catch_warnings():
             filterwarnings('error')
             try:
-                return self.Q(ξ).T
+                return self.Qf(ξ).T
             except RuntimeWarning:
                 raise ValueError("J computation found Runtime warning.")
                 
-    def fullJacobian(self, ξ):
+    def J(self, ξ):
         """J_f(G(ξ)) * J_G(ξ). This is the true Jacobian of the reparametrized constraint function.
         Obtained using the Chain Rule. This is what should be used in THUG and C-RWM algorithms."""
         JGbar = block_diag(10*np.diag(ndist.pdf(ξ[:4])), eye(len(ξ[4:])))
-        return self.J(ξ) @ JGbar
+        return self.Jf(ξ) @ JGbar
                 
     def log_parameter_prior(self, θ):
         """IMPORTANT: Typically the prior distribution is a U(0, 10) for all four parameters.
@@ -579,7 +583,7 @@ class GKManifold(Manifold):
     def logη(self, ξ):
         """Log-posterior for C-RWM. This is on the manifold."""
         try:
-            J = self.fullJacobian(ξ)
+            J = self.J(ξ)
             logprior = self.logprior(ξ)
             correction_term  = - math.prod(np.linalg.slogdet(J@J.T))/2 
             return  logprior + correction_term

@@ -120,6 +120,8 @@ if __name__== "__main__":
     σR = 1
     σF = 1
     EPSILONS = generate_powers_of_ten(0, -3)   # [1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001]
+    BS = [1, 10, 20]
+    STEP_SIZE = 0.01
     DISCRETIZATION_STEP_SIZE = 1.0
     SAFE_JACOBIAN = False
     assert len(SEEDS_FOR_CHAINS) == N_CHAINS, "For reproducibility, you need to choose `N_CHAINS` random seeds."
@@ -127,9 +129,9 @@ if __name__== "__main__":
     # Settings for Ns=100
     SETTINGS100 = generate_settings(
     N=200, 
-    δ=0.01, 
+    δ=STEP_SIZE, 
     Ns=100, 
-    Bs=[1, 10, 20], 
+    Bs=BS, 
     ϵs=EPSILONS, 
     u1_true=False,
     tol=1e-14,
@@ -137,10 +139,29 @@ if __name__== "__main__":
     seeds=SEEDS_FOR_CHAINS
     )
 
-    # Run algorithms
+    # Settings for Ns=120
+    SETTINGS120 = generate_settings(
+    N=200, 
+    δ=STEP_SIZE, 
+    Ns=120, 
+    Bs=BS, 
+    ϵs=EPSILONS, 
+    u1_true=False,
+    tol=1e-14,
+    n_chains=N_CHAINS,
+    seeds=SEEDS_FOR_CHAINS
+)
+
+    # Ns = 100
     # THUG00_CC_100, THUG00_AP_100 = cc_experiment_thug(SETTINGS100, 0.0, verbose=False, safe=SAFE_JACOBIAN)
     # THUG09_CC_100, THUG09_AP_100 = cc_experiment_thug(SETTINGS100, 0.9, verbose=False, safe=SAFE_JACOBIAN)
-    THUG99_CC_100, THUG99_AP_100 = cc_experiment_thug(SETTINGS100, 0.99, verbose=False, safe=SAFE_JACOBIAN)
+    # THUG99_CC_100, THUG99_AP_100 = cc_experiment_thug(SETTINGS100, 0.99, verbose=False, safe=SAFE_JACOBIAN)
+    CRWM_CC_100, CRWM_AP_100     = cc_experiment_crwm(SETTINGS100, tol=1e-11, verbose=False)
+    # Ns = 120
+    # THUG00_CC_120, THUG00_AP_120 = cc_experiment_thug(SETTINGS120, 0.0, verbose=False, safe=SAFE_JACOBIAN)
+    # THUG09_CC_120, THUG09_AP_120 = cc_experiment_thug(SETTINGS120, 0.9, verbose=False, safe=SAFE_JACOBIAN)
+    # THUG99_CC_120, THUG99_AP_120 = cc_experiment_thug(SETTINGS120, 0.99, verbose=False, safe=SAFE_JACOBIAN)
+    # CRWM_CC_120, CRWM_AP_120     = cc_experiment_crwm(SETTINGS120, tol=1e-11, verbose=False)
 
 
 
@@ -151,10 +172,22 @@ if __name__== "__main__":
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-    # Save data
+    # Save data for Ns=100
     # save(os.path.join(folder, 'THUG00_CC_100.npy'), THUG00_CC_100)
     # save(os.path.join(folder, 'THUG00_AP_100.npy'), THUG00_AP_100)
     # save(os.path.join(folder, 'THUG09_CC_100.npy'), THUG09_CC_100)
     # save(os.path.join(folder, 'THUG09_AP_100.npy'), THUG09_AP_100)
-    save(os.path.join(folder, 'THUG99_CC_100.npy'), THUG99_CC_100)
-    save(os.path.join(folder, 'THUG99_AP_100.npy'), THUG99_AP_100)
+    # save(os.path.join(folder, 'THUG99_CC_100.npy'), THUG99_CC_100)
+    # save(os.path.join(folder, 'THUG99_AP_100.npy'), THUG99_AP_100)
+    save(os.path.join(folder, 'CRWM_CC_100.npy'), CRWM_CC_100)
+    save(os.path.join(folder, 'CRWM_AP_100.npy'), CRWM_AP_100)
+
+    # Save data for Ns=120
+    # save(os.path.join(folder, 'THUG00_CC_120.npy'), THUG00_CC_120)
+    # save(os.path.join(folder, 'THUG00_AP_120.npy'), THUG00_AP_120)
+    # save(os.path.join(folder, 'THUG09_CC_120.npy'), THUG09_CC_120)
+    # save(os.path.join(folder, 'THUG09_AP_120.npy'), THUG09_AP_120)
+    # save(os.path.join(folder, 'THUG99_CC_120.npy'), THUG99_CC_120)
+    # save(os.path.join(folder, 'THUG99_AP_120.npy'), THUG99_AP_120)
+    # save(os.path.join(folder, 'CRWM_CC_120.npy'), CRWM_CC_120)
+    # save(os.path.join(folder, 'CRWM_AP_120.npy'), CRWM_AP_120)

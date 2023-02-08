@@ -63,7 +63,7 @@ def CRWM(x0, manifold, n, T, B, tol, rev_tol, maxiter=50, norm_ord=2, rng=None):
 
     # Initial point on the manifold
     x = x0
-    compute_J = lambda x: manifold.fullJacobian(x)
+    compute_J = lambda x: manifold.J(x)
 
     # House-keeping
     samples = zeros((n, d + m))    # Store n samples on the manifold
@@ -296,7 +296,7 @@ def projectCRWM(manifold, z, Q, tol = 1.48e-08 , maxiter = 50, norm_ord=2):
     # While loop
     while la.norm(projected_value, ord=norm_ord) >= tol:
         try:
-            Jproj = manifold.fullJacobian(z - Q@a)
+            Jproj = manifold.J(z - Q@a)
         except ValueError as e:
             print("Jproj failed. ", e)
             return zeros(Q.shape[1]), 0, i
