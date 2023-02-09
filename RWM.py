@@ -1,7 +1,5 @@
-import numpy as np
-from numpy import zeros, log, eye, vstack
+from numpy import zeros, log, vstack
 from numpy.random import default_rng, randint
-from scipy.stats import multivariate_normal as MVN
 
 
 def RWM(x0, s, N, logpi, rng=None):

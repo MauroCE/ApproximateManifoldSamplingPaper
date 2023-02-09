@@ -361,24 +361,24 @@ if __name__ == "__main__":
     # save(os.path.join(folder, 'EPSILONS.npy'), EPSILONS)
 
     # Seeds
-    save(os.path.join(folder, 'SEEDS.npy'), SEEDS_FOR_CHAINS)
+    # save(os.path.join(folder, 'SEEDS.npy'), SEEDS_FOR_CHAINS)
 
-    # Best epsilon samples for RWM
-    save(os.path.join(folder, 'RWM_BEST_EPSILON_SAMPLES.npy'), sRWM_best_eps)
-    save(os.path.join(folder, 'RWM_BEST_EPSILON_AP.npy'), aRWM_best_eps)
-    save(os.path.join(folder, 'RWM_BEST_EPSILON.npy'), best_eps_RWM)
-    save(os.path.join(folder, 'RWM_AP_DICTIONARY.npy'), ap_RWM)
+    # # Best epsilon samples for RWM
+    # save(os.path.join(folder, 'RWM_BEST_EPSILON_SAMPLES.npy'), sRWM_best_eps)
+    # save(os.path.join(folder, 'RWM_BEST_EPSILON_AP.npy'), aRWM_best_eps)
+    # save(os.path.join(folder, 'RWM_BEST_EPSILON.npy'), best_eps_RWM)
+    # save(os.path.join(folder, 'RWM_AP_DICTIONARY.npy'), ap_RWM)
 
-    # Best epsilon samples for THUG
-    save(os.path.join(folder, 'THUG00_BEST_EPSILON_SAMPLES.npy'), sTHUG00_best_eps)
-    save(os.path.join(folder, 'THUG00_BEST_EPSILON_AP.npy'), aTHUG00_best_eps)
-    save(os.path.join(folder, 'THUG00_BEST_EPSILON.npy'), best_eps_THUG00)
-    save(os.path.join(folder, 'THUG00_AP_DICTIONARY.npy'), ap_thug00)
-    save(os.path.join(folder, 'THUG999_BEST_EPSILON_SAMPLES.npy'), sTHUG999_best_eps)
-    save(os.path.join(folder, 'THUG999_BEST_EPSILON_AP.npy'), aTHUG999_best_eps)
-    save(os.path.join(folder, 'THUG999_BEST_EPSILON.npy'), best_eps_THUG999)
-    save(os.path.join(folder, 'THUG999_AP_DICTIONARY.npy'), ap_thug999)
+    # # Best epsilon samples for THUG
+    # save(os.path.join(folder, 'THUG00_BEST_EPSILON_SAMPLES.npy'), sTHUG00_best_eps)
+    # save(os.path.join(folder, 'THUG00_BEST_EPSILON_AP.npy'), aTHUG00_best_eps)
+    # save(os.path.join(folder, 'THUG00_BEST_EPSILON.npy'), best_eps_THUG00)
+    # save(os.path.join(folder, 'THUG00_AP_DICTIONARY.npy'), ap_thug00)
+    # save(os.path.join(folder, 'THUG999_BEST_EPSILON_SAMPLES.npy'), sTHUG999_best_eps)
+    # save(os.path.join(folder, 'THUG999_BEST_EPSILON_AP.npy'), aTHUG999_best_eps)
+    # save(os.path.join(folder, 'THUG999_BEST_EPSILON.npy'), best_eps_THUG999)
+    # save(os.path.join(folder, 'THUG999_AP_DICTIONARY.npy'), ap_thug999)
 
-    # Best epsilon samples for CRWM
-    save(os.path.join(folder, 'CRWM_BEST_EPSILON_SAMPLES.npy'), sCRWM_best_eps)
-    save(os.path.join(folder, 'CRWM_BEST_EPSILON_AP.npy'), aCRWM_best_eps)
+    # # Best epsilon samples for CRWM
+    # save(os.path.join(folder, 'CRWM_BEST_EPSILON_SAMPLES.npy'), sCRWM_best_eps)
+    # save(os.path.join(folder, 'CRWM_BEST_EPSILON_AP.npy'), aCRWM_best_eps)

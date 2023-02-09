@@ -3,7 +3,6 @@ Reproduces the Lotka-Volterra experiment.
 """
 import time 
 from numpy import zeros, nan, repeat, save
-from numpy.random import default_rng
 from copy import deepcopy
 from ConstrainedRWM import CRWM
 from HelperFunctions import compute_arviz_miness_runtime, generate_powers_of_ten
@@ -119,7 +118,7 @@ if __name__== "__main__":
     F0 = 100
     σR = 1
     σF = 1
-    EPSILONS = generate_powers_of_ten(0, -3)   # [1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001]
+    EPSILONS = generate_powers_of_ten(0, -6)   # [1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001]
     BS = [1, 10, 20]
     STEP_SIZE = 0.01
     DISCRETIZATION_STEP_SIZE = 1.0
@@ -156,7 +155,7 @@ if __name__== "__main__":
     # THUG00_CC_100, THUG00_AP_100 = cc_experiment_thug(SETTINGS100, 0.0, verbose=False, safe=SAFE_JACOBIAN)
     # THUG09_CC_100, THUG09_AP_100 = cc_experiment_thug(SETTINGS100, 0.9, verbose=False, safe=SAFE_JACOBIAN)
     # THUG99_CC_100, THUG99_AP_100 = cc_experiment_thug(SETTINGS100, 0.99, verbose=False, safe=SAFE_JACOBIAN)
-    CRWM_CC_100, CRWM_AP_100     = cc_experiment_crwm(SETTINGS100, tol=1e-11, verbose=False)
+    # CRWM_CC_100, CRWM_AP_100     = cc_experiment_crwm(SETTINGS100, tol=1e-11, verbose=False)
     # Ns = 120
     # THUG00_CC_120, THUG00_AP_120 = cc_experiment_thug(SETTINGS120, 0.0, verbose=False, safe=SAFE_JACOBIAN)
     # THUG09_CC_120, THUG09_AP_120 = cc_experiment_thug(SETTINGS120, 0.9, verbose=False, safe=SAFE_JACOBIAN)
@@ -179,8 +178,8 @@ if __name__== "__main__":
     # save(os.path.join(folder, 'THUG09_AP_100.npy'), THUG09_AP_100)
     # save(os.path.join(folder, 'THUG99_CC_100.npy'), THUG99_CC_100)
     # save(os.path.join(folder, 'THUG99_AP_100.npy'), THUG99_AP_100)
-    save(os.path.join(folder, 'CRWM_CC_100.npy'), CRWM_CC_100)
-    save(os.path.join(folder, 'CRWM_AP_100.npy'), CRWM_AP_100)
+    # save(os.path.join(folder, 'CRWM_CC_100.npy'), CRWM_CC_100)
+    # save(os.path.join(folder, 'CRWM_AP_100.npy'), CRWM_AP_100)
 
     # Save data for Ns=120
     # save(os.path.join(folder, 'THUG00_CC_120.npy'), THUG00_CC_120)
@@ -191,3 +190,7 @@ if __name__== "__main__":
     # save(os.path.join(folder, 'THUG99_AP_120.npy'), THUG99_AP_120)
     # save(os.path.join(folder, 'CRWM_CC_120.npy'), CRWM_CC_120)
     # save(os.path.join(folder, 'CRWM_AP_120.npy'), CRWM_AP_120)
+
+    # Save Epsilons
+    save(os.path.join(folder, 'EPSILONS.npy'), EPSILONS)
+    save(os.path.join(folder, 'BS.npy'), BS)
