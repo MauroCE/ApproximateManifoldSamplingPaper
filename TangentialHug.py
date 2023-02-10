@@ -1,6 +1,6 @@
 from numpy import zeros, log, vstack, zeros_like, eye
 from numpy.random import default_rng, randint
-from numpy.linalg import solve
+from numpy.linalg import solve, norm
 from scipy.linalg import qr, lstsq
 from scipy.stats import multivariate_normal as MVN
 from warnings import catch_warnings, filterwarnings
@@ -55,7 +55,7 @@ def THUG(x0, T, B, N, α, logpi, jac, method='qr', rng=None, safe=True):
     :param acceptances: Array of `0`s and `1`s indicating whether a certain sample was an acceptance or rejection.
     :type acceptances: ndarray
     """
-    assert method == 'qr' or method == 'linear' or method == 'lstsq'
+    assert method == 'qr' or method == 'linear' or method == 'lstsq' or method == '2d'
     if rng is None:
         rng = default_rng(seed=randint(low=1000, high=9999))
     def qr_project(v, J):
@@ -68,12 +68,21 @@ def THUG(x0, T, B, N, α, logpi, jac, method='qr', rng=None, safe=True):
     def lstsq_project(v, J):
         """Projects using scipy's Least Squares Routine."""
         return J.T.dot(lstsq(J.T, v)[0])
+    def project_2d(v, g):
+        """Projection function for when the constraint function f:R^n -> R is scalar-valued.
+        In this case, the Jacobian function is actually a vector `g`, i.e. the gradient. 
+        We assume the gradient is a (2, ), i.e. a row numpy array, not a column vector (2, 1). """
+        g_hat = g / norm(g)
+        return g_hat * (g_hat @ v)
+
     if method == 'qr':
         project = qr_project
     elif method == 'linear':
         project = linear_project
-    else:
+    elif method == 'lstsq':
         project = lstsq_project
+    else:
+        project = project_2d
     # Jacobian function raising an error for RuntimeWarning
     def safe_jacobian_function(x):
         """Raises an error when a RuntimeWarning appears."""
@@ -90,16 +99,16 @@ def THUG(x0, T, B, N, α, logpi, jac, method='qr', rng=None, safe=True):
     for i in range(N):
         v0s = rng.normal(size=len(x0))
         # Squeeze
-        v0 = v0s - α * project(v0s, safe_jac(x0)) #jac(x0))
+        v0 = v0s - α * project(v0s, safe_jac(x0))
         v, x = v0, x0
         logu = log(rng.uniform())
         δ = T / B
         for _ in range(B):
             x = x + δ*v/2
-            v = v - 2 * project(v, safe_jac(x)) #jac(x))
+            v = v - 2 * project(v, safe_jac(x)) 
             x = x + δ*v/2
         # Unsqueeze
-        v = v + (α / (1 - α)) * project(v, safe_jac(x)) #jac(x))
+        v = v + (α / (1 - α)) * project(v, safe_jac(x)) 
         if logu <= logpi(x) + q.logpdf(v) - logpi(x0) - q.logpdf(v0s):
             samples = vstack((samples, x))
             acceptances[i] = 1         # Accepted!
