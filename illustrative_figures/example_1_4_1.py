@@ -7,6 +7,7 @@ from numpy.random import default_rng, randint
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal as MVN
 from scipy.optimize import fsolve
+import os
 from ..HelperFunctions import prep_contour
 from ..RWM import RWM
 from ..TangentialHug import THUG
@@ -106,7 +107,7 @@ if __name__ == "__main__":
         ax[i].set_yticks([])
         ax[i].set_aspect('equal')
     fig.tight_layout()
-    plt.savefig("example141_figure3_contours_mixture_gaussian.png", dpi=500)
+    plt.savefig("ApproximateManifoldSampling/illustrative_figures/example141_figure3_contours_mixture_gaussian.png", dpi=500)
     plt.show()
 
     ### Figure 4 ###
@@ -150,5 +151,5 @@ if __name__ == "__main__":
         ax[i].set_xticks([])
         ax[i].set_yticks([])
     plt.tight_layout()
-    plt.savefig('example_141_figure4_contours_with_samples.png')
+    plt.savefig('ApproximateManifoldSampling/illustrative_figures/example_141_figure4_contours_with_samples.png')
     plt.show()
