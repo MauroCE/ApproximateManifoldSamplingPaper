@@ -105,9 +105,9 @@ class HMC:
         logu = np.log(rng.uniform(low=0.0, high=1.0, size=self.n))
 
         # Sample momentums
-        z = rng.normal(loc=0.0, scale=1.0, size=(self.n, self.d))
+        z = rng.normal(loc=0.0, scale=1.0, size=(self.d, self.n))
         L = cholesky(self.M)
-        ps = L @ z
+        ps = (L @ z).T
         # Log-density of momentum distribution
         neg_log_dens_mom_dis = lambda p: (self.d/2)*log(2*pi) + 0.5*prod(slogdet(self.M)) + 0.5*p@solve(self.M, p)
         
