@@ -118,8 +118,6 @@ if __name__ == "__main__":
 
     # Initialize storage for the results
     crwm_av_accept_probs  = full((σ_grid.shape[0], δ_grid.shape[0]), 0.0)
-    # crwm_av_njacob_evals  = full((σ_grid.shape[0], δ_grid.shape[0]), 0.0)
-    # crwm_av_miness_runtime = full((σ_grid.shape[0], δ_grid.shape[0]), 0.0)
     hmc_av_accept_probs   = full((σ_grid.shape[0], δ_grid.shape[0]), 0.0)
     rmhmc_av_accept_probs = full((σ_grid.shape[0], δ_grid.shape[0]), nan)
     thug_av_accept_probs  = full((σ_grid.shape[0], δ_grid.shape[0]), 0.0)
@@ -127,8 +125,7 @@ if __name__ == "__main__":
 
 
     # Seed for reproducibility
-    seed = 20200310
-    rng = default_rng(seed)
+    rng = default_rng(seed=20200310)
     seeds = [1122, 2233, 3344, 4455, 5566, 6677, 7788, 8899, 9900, 1100]
     rngs  = [default_rng(seed=seed) for seed in seeds]
     _ = seterr(invalid='ignore', over='ignore')
@@ -183,34 +180,21 @@ if __name__ == "__main__":
         log_posterior = lambda θ, y=y, σ=σ: prior_log_dens(θ) - norm(y - F(θ))**2 / (2*σ**2) - 1*log(σ)
         grad_log_post = lambda θ, y=y, σ=σ: grad_log_prior(θ) + (y - F(θ))*grad_F(θ) / (σ**2)
         for δ_ix, δ in enumerate(δ_grid): # for each step size
-            # chains = {'THUG': [], 'CRWM': []}
-            # times  = {'THUG': [], 'CRWM': []}
-            # avg_ap = {'THUG': 0.0, 'CRWM': 0.0}
             for chain_ix in range(n_chains): # for each chain
                 # Run Tangential Hug
-                # start_time_thug = time.time()
-                # sTHUG, aTHUG = THUG(θ_inits[chain_ix], B*δ, B, N, α=0.0, logpi=log_posterior, jac=grad_F, method='2d', rng=rngs[chain_ix])
-                # runtime_thug = time.time() - start_time_thug 
-                # chains['THUG'].append(sTHUG)
-                # times['THUG'].append(runtime_thug)
-                # thug_av_accept_probs[σ_ix, δ_ix] += (aTHUG.mean() / n_chains)
+                sTHUG, aTHUG = THUG(θ_inits[chain_ix], B*δ, B, N, α=0.0, logpi=log_posterior, jac=grad_F, method='2d', rng=rngs[chain_ix])
+                thug_av_accept_probs[σ_ix, δ_ix] += (aTHUG.mean() / n_chains)
                 # Run C-RWM (rattle version)
-                # start_time_crwm = time.time()
-                # sCRWM, _, aCRWM = CRWM(q_inits[chain_ix], manifold, N, B*δ, B, tol=1e-14, rev_tol=1e-14, rng=rngs[chain_ix])
-                # runtime_crwm = time.time() - start_time_crwm
-                # chains['CRWM'].append(sCRWM)
-                # times['CRWM'].append(runtime_crwm)
-                # crwm_av_accept_probs[σ_ix, δ_ix] += (aCRWM.mean() / n_chains)
-                # Run my version of HMC
-                # start_time_hmc = time.time()
+                sCRWM, _, aCRWM = CRWM(q_inits[chain_ix], manifold, N, B*δ, B, tol=1e-14, rev_tol=1e-14, rng=rngs[chain_ix])
+                crwm_av_accept_probs[σ_ix, δ_ix] += (aCRWM.mean() / n_chains)
+                # Run HMC (on true posterior, not lifted)
                 neg_log_post = lambda θ: - log_posterior(θ)
                 grad_neg_log_post = lambda θ: - grad_log_prior(θ) - (y - F(θ))*grad_F(θ) / (σ**2)
-                # hmc_sampler =  HMC(θ_inits[chain_ix], N, eye(2), B*δ, δ)
-                # hmc_sampler.dVdq = grad_neg_log_post
-                # hmc_sampler.neg_log_target = neg_log_post
-                # sHMC, aHMC = hmc_sampler.sample()
-                # runtime_hmc = time.time() - start_time_hmc
-                # hmc_av_accept_probs[σ_ix, δ_ix] += (aHMC.mean() / n_chains)
+                hmc_sampler =  HMC(θ_inits[chain_ix], N, eye(2), B*δ, δ)
+                hmc_sampler.dVdq = grad_neg_log_post
+                hmc_sampler.neg_log_target = neg_log_post
+                sHMC, aHMC = hmc_sampler.sample()
+                hmc_av_accept_probs[σ_ix, δ_ix] += (aHMC.mean() / n_chains)
                 # Run RM-HMC (on true posterior, not lifted)
                 system = DRMS(neg_log_dens=partial(neg_log_posterior_dens, σ=σ, y=y), grad_neg_log_dens=partial(grad_neg_log_posterior_dens, σ=σ, y=y), metric_func=partial(metric, σ=σ), vjp_metric_func=partial(vjp_metric, σ=σ))
                 system = DRMS(neg_log_dens=neg_log_post, grad_neg_log_dens=grad_neg_log_post, metric_func=partial(metric, σ=σ), vjp_metric_func=partial(vjp_metric, σ=σ))
@@ -227,9 +211,9 @@ if __name__ == "__main__":
         os.makedirs(folder)
 
     # Save data
-    # save(os.path.join(folder, 'THUG_AP.npy'), thug_av_accept_probs)
-    # save(os.path.join(folder, 'CRWM_AP.npy'), crwm_av_accept_probs)
-    # save(os.path.join(folder, 'HMC_AP.npy'), hmc_av_accept_probs)
+    save(os.path.join(folder, 'THUG_AP.npy'), thug_av_accept_probs)
+    save(os.path.join(folder, 'CRWM_AP.npy'), crwm_av_accept_probs)
+    save(os.path.join(folder, 'HMC_AP.npy'), hmc_av_accept_probs)
     save(os.path.join(folder, 'RMHMC_AP.npy'), rmhmc_av_accept_probs)
 
     # Save noise scales and step sizes
