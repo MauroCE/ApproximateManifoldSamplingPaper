@@ -27,7 +27,7 @@ def show_only_positive_ap_crwm(out_cc, out_ap, ϵs, ix):
 if __name__ == "__main__":
     # Construct folder from which we load data
     mainfolder = "LV_Experiment"
-    subfolder = '2222_3333_4444_5555'
+    subfolder = '1122_2233_3344_4455' #'6666_7777_8888_9999' #'2222_3333_4444_5555'
     folder = os.path.join(mainfolder, subfolder)
     # Folder into which we save plots
     savefolder = 'images'
@@ -74,5 +74,5 @@ if __name__ == "__main__":
     ax.set_xlabel(r"$\mathregular{\epsilon}$", fontsize=20)
     ax.set_ylabel("minESS/runtime", fontsize=20)
     ax.loglog()
-    plt.savefig('images/lv_computational_cost_100.png')
+    plt.savefig('images/lv_computational_cost_100_' + subfolder + '.png')
     plt.show()

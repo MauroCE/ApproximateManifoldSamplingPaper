@@ -2,7 +2,7 @@
 Reproduces the Lotka-Volterra experiment.
 """
 import time 
-from numpy import zeros, nan, repeat, save
+from numpy import zeros, nan, repeat, save, unique
 from copy import deepcopy
 from ConstrainedRWM import CRWM
 from HelperFunctions import compute_arviz_miness_runtime, generate_powers_of_ten
@@ -15,6 +15,7 @@ def generate_settings(N, δ, Ns, Bs, ϵs, seeds, n_chains=4, u1_true=True, tol=1
     """Generates variables for the experiment."""
     manifold = LVManifold(Ns=Ns, n_chains=n_chains, seeds=seeds)
     u0s = manifold.find_init_points_for_each_chain(u1_true=u1_true, tol=tol, maxiter=maxiter)
+    print("Settings Ns = ", Ns, ". All rows equal? ", (u0s == u0s[0]).all())
     return {
         'N': N,
         'δ': δ,
@@ -51,10 +52,11 @@ def cc_experiment_thug(settings, α=0.0, verbose=False, safe=False):
                 start_time = time.time()
                 s, a = THUG(u0s[chain_ix, :], B*δ, B, N, α, logηϵ, J, method='linear', rng=rngs[chain_ix], safe=safe)
                 runtime = time.time() - start_time
-                verboseprint("B={} time={} a={}".format(B, runtime, a.mean()))
+                verboseprint("epsilon={} B={} time={} a={} uot={}".format(ϵ, B, runtime, a.mean(), unique(s, axis=0).shape[0]))
                 chains.append(s)
                 times.append(runtime)
                 avg_ap += (a.mean() / n_chains)
+            verboseprint()
             ESS_TABLE[ϵ_ix, B_ix] = compute_arviz_miness_runtime(chains, times)
             AP_TABLE[ϵ_ix, B_ix]  = avg_ap
     return ESS_TABLE, AP_TABLE
@@ -112,7 +114,7 @@ if __name__== "__main__":
     # Global settings
     N_CHAINS = 4
     SEED_DATA_GENERATION = 1111                      # Used to generate y*
-    SEEDS_FOR_CHAINS     = [2222, 3333, 4444, 5555]  # Each seed, used to find starting point of initial chain.
+    SEEDS_FOR_CHAINS     = [1122, 2233, 3344, 4455] #[6666, 7777, 8888, 9999] #[2222, 3333, 4444, 5555]  # Each seed, used to find starting point of initial chain.
     Z_TRUE   = (0.4, 0.005, 0.05, 0.001)
     R0 = 100
     F0 = 100
@@ -138,18 +140,18 @@ if __name__== "__main__":
     seeds=SEEDS_FOR_CHAINS
     )
 
-    # Settings for Ns=120
-    SETTINGS120 = generate_settings(
-    N=200, 
-    δ=STEP_SIZE, 
-    Ns=120, 
-    Bs=BS, 
-    ϵs=EPSILONS, 
-    u1_true=False,
-    tol=1e-14,
-    n_chains=N_CHAINS,
-    seeds=SEEDS_FOR_CHAINS
-)
+#     # Settings for Ns=120
+#     SETTINGS120 = generate_settings(
+#     N=200, 
+#     δ=STEP_SIZE, 
+#     Ns=120, 
+#     Bs=BS, 
+#     ϵs=EPSILONS, 
+#     u1_true=False,
+#     tol=1e-14,
+#     n_chains=N_CHAINS,
+#     seeds=SEEDS_FOR_CHAINS
+# )
 
     # Ns = 100
     # THUG00_CC_100, THUG00_AP_100 = cc_experiment_thug(SETTINGS100, 0.0, verbose=False, safe=SAFE_JACOBIAN)
@@ -192,5 +194,5 @@ if __name__== "__main__":
     # save(os.path.join(folder, 'CRWM_AP_120.npy'), CRWM_AP_120)
 
     # Save Epsilons
-    save(os.path.join(folder, 'EPSILONS.npy'), EPSILONS)
-    save(os.path.join(folder, 'BS.npy'), BS)
+    # save(os.path.join(folder, 'EPSILONS.npy'), EPSILONS)
+    # save(os.path.join(folder, 'BS.npy'), BS)

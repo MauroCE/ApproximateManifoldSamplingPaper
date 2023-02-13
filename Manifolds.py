@@ -8,9 +8,9 @@ This file contains various classes relating to Manifolds.
 """
 import math
 import numpy as np
-from numpy import log, pi, zeros, eye, ones, exp, sqrt, diag, apply_along_axis, concatenate, vstack, isfinite
-from numpy.random import default_rng, randn
-from numpy.linalg import svd, inv, det, norm
+from numpy import log, pi, zeros, eye, ones, exp, sqrt, diag, apply_along_axis, concatenate, vstack, isfinite, array
+from numpy.random import default_rng
+from numpy.linalg import svd, inv, det
 from scipy.optimize import fsolve
 from scipy.stats import multivariate_normal as MVN
 from scipy.stats import norm as ndist
@@ -142,6 +142,34 @@ class GeneralizedEllipse(Manifold):
         optimal_coef = fsolve(objective, 1.0) # Find coefficient so that optimal_coef*start is on contour
         return start * optimal_coef
     
+
+class BIPManifold(Manifold):
+    def __init__(self, σ, ystar):
+        """Manifold for the Bayesian Inverse Problem."""
+        self.m = 1                 # One constraint F(theta, eta) = y
+        self.d = 2                 # Dimension on manifold is 3 - 1 = 2.
+        self.n = self.m + self.d   # Dimension of ambient space
+        self.σ = σ                 # Noise scale
+        self.ystar = ystar         # Observed data
+
+    def q(self, ξ):
+        """Constraint for toy BIP experiment."""
+        return array([ξ[1]**2 + 3 * ξ[0]**2 * (ξ[0]**2 - 1)]) + self.σ*ξ[2] - self.ystar
+
+    def Q(self, ξ):
+        """Transpose of Jacobian for toy BIP. This is for the lifted manifold. Should not be used for THUG."""
+        return array([12*ξ[0]**3 - 6*ξ[0], 2*ξ[1], self.σ]).reshape(-1, self.m)
+
+    def J(self, ξ):
+        """Jacobian for the toy BIP. This is for the lifted manifold. Should not be used for THUG."""
+        return array([12*ξ[0]**3 - 6*ξ[0], 2*ξ[1], self.σ]).reshape(self.m, -1)
+
+    def logη(self, ξ):
+        """log posterior for c-rwm"""
+        J = self.J(ξ)
+        return - ξ[:2]@ξ[:2]/2 - ξ[-1]**2/2 - log(J@J.T + self.σ**2)[0, 0]/2
+
+
 
 class LVManifold(Manifold):
     def __init__(self, Ns=50, step_size=1.0, σr=1.0, σf=1.0, r0=100, f0=100, z_true=(0.4, 0.005, 0.05, 0.001), seed=1111, seeds=[2222, 3333, 4444, 5555], n_chains=4):
