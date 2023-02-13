@@ -4,17 +4,14 @@ THUG, RM-HMC, HMC are on the true posterior p_sigma(theta mid y*), whereas C-RWM
 the lifted posterior p_sigma(theta, upsilon mid y*).
 """
 from numpy import logspace, concatenate, linspace, finfo, float64, cos, pi, stack, array, full, seterr
-from numpy import zeros, eye, mean, log, nan, save
+from numpy import zeros, eye, log, nan, save
 from numpy.linalg import norm
 from numpy.random import default_rng
 from scipy.stats import multivariate_normal as MVN
-from itertools import product
 from Manifolds import BIPManifold
 from ConstrainedRWM import CRWM
 from TangentialHug import THUG
 from HMC import HMC
-from HelperFunctions import compute_arviz_miness_runtime
-import time 
 import collections.abc
 collections.Iterable = collections.abc.Iterable
 collections.Mapping = collections.abc.Mapping
@@ -24,14 +21,9 @@ import sympy
 from symnum import (
     numpify, named_array, jacobian, grad, 
     vector_jacobian_product, matrix_hessian_product)
-from mici.systems import DenseConstrainedEuclideanMetricSystem as DCEMS
-from mici.systems import EuclideanMetricSystem as EMS
 from mici.systems import DenseRiemannianMetricSystem as DRMS
-from mici.integrators import ConstrainedLeapfrogIntegrator as CLI
-from mici.integrators import LeapfrogIntegrator as LI
 from mici.integrators import ImplicitLeapfrogIntegrator as ILI
 from mici.samplers import StaticMetropolisHMC as SMHMC
-from mici.solvers import solve_projection_onto_manifold_newton
 from functools import partial
 import symnum.numpy as snp
 import os
@@ -195,7 +187,8 @@ if __name__ == "__main__":
                 hmc_sampler.neg_log_target = neg_log_post
                 sHMC, aHMC = hmc_sampler.sample()
                 hmc_av_accept_probs[σ_ix, δ_ix] += (aHMC.mean() / n_chains)
-                # Run RM-HMC (on true posterior, not lifted)
+                # Run RM-HMC (on true posterior, not lifted).
+                ### Careful: this will take a good while, perhaps 1 or 2 hours
                 system = DRMS(neg_log_dens=partial(neg_log_posterior_dens, σ=σ, y=y), grad_neg_log_dens=partial(grad_neg_log_posterior_dens, σ=σ, y=y), metric_func=partial(metric, σ=σ), vjp_metric_func=partial(vjp_metric, σ=σ))
                 system = DRMS(neg_log_dens=neg_log_post, grad_neg_log_dens=grad_neg_log_post, metric_func=partial(metric, σ=σ), vjp_metric_func=partial(vjp_metric, σ=σ))
                 integrator = ILI(system, step_size=δ)
