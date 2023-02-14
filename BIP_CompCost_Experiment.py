@@ -102,11 +102,17 @@ if __name__ == "__main__":
     # Initial points on the manifold
     θ_inits = concatenate(solve_for_limiting_manifold(y, n_chains))
 
-    # Initialize storage for the results
+    # Initialize storage for the results of computational cost
     THUG_CC = zeros(len(σ_grid))
     THUG99_CC = zeros(len(σ_grid))
     CRWM_CC = zeros(len(σ_grid))
     HMC_CC  = zeros(len(σ_grid))
+
+    # Initialize storage for the results of acceptance probability
+    THUG_AP   = zeros(len(σ_grid))
+    THUG99_AP = zeros(len(σ_grid))
+    CRWM_AP   = zeros(len(σ_grid))
+    HMC_AP    = zeros(len(σ_grid))
 
     # Seed for reproducibility
     seeds = [1122, 2233, 3344, 4455, 5566, 6677, 7788, 8899, 9900, 1100, 1830, 1038]
@@ -130,42 +136,52 @@ if __name__ == "__main__":
         log_posterior = lambda θ, y=y, σ=σ: prior_log_dens(θ) - norm(y - F(θ))**2 / (2*σ**2) - 1*log(σ)
         grad_log_post = lambda θ, y=y, σ=σ: grad_log_prior(θ) + (y - F(θ))*grad_F(θ) / (σ**2)
         chains = {'THUG': [], 'CRWM': [], 'HMC': [], 'THUG99': []}
-        times  = {'THUG': [], 'CRWM':[], 'HMC':[], 'THUG99': []}
+        times  = {'THUG': [], 'CRWM': [], 'HMC': [], 'THUG99': []}
+        avg_ap = {'THUG': 0.0, 'CRWM': 0.0, 'HMC': 0.0, 'THUG99': 0.0}
         for chain_ix in range(n_chains): # for each chain
             # Run Tangential Hug (alpha=0.0)
-            # start_time_thug = time.time()
-            # sTHUG, aTHUG = THUG(θ_inits[chain_ix], B*δ, B, N, α=0.0, logpi=log_posterior, jac=grad_F, method='2d', rng=rngs[chain_ix])
-            # runtime_thug = time.time() - start_time_thug
-            # chains['THUG'].append(sTHUG)
-            # times['THUG'].append(runtime_thug)
+            start_time_thug = time.time()
+            sTHUG, aTHUG = THUG(θ_inits[chain_ix], B*δ, B, N, α=0.0, logpi=log_posterior, jac=grad_F, method='2d', rng=rngs[chain_ix])
+            runtime_thug = time.time() - start_time_thug
+            chains['THUG'].append(sTHUG)
+            times['THUG'].append(runtime_thug)
+            avg_ap['THUG'] += (aTHUG.mean()/n_chains)
             # Run Tangential Hug (alpha=0.99)
             start_time_thug99 = time.time()
-            sTHUG99, aTHUG99 = THUG(θ_inits[chain_ix], B*δ, B, N, α=0.9, logpi=log_posterior, jac=grad_F, method='2d', rng=rngs[chain_ix])
+            sTHUG99, aTHUG99 = THUG(θ_inits[chain_ix], B*δ, B, N, α=0.99, logpi=log_posterior, jac=grad_F, method='2d', rng=rngs[chain_ix])
             runtime_thug99 = time.time() - start_time_thug99
             chains['THUG99'].append(sTHUG99)
             times['THUG99'].append(runtime_thug99)
+            avg_ap['THUG99'] += (aTHUG99.mean()/n_chains)
             # Run C-RWM (rattle version)
-            # start_time_crwm = time.time()
-            # sCRWM, _, aCRWM = CRWM(q_inits[chain_ix], manifold, N, B*δ, B, tol=1e-14, rev_tol=1e-14, rng=rngs[chain_ix])
-            # runtime_crwm = time.time() - start_time_crwm
-            # chains['CRWM'].append(sCRWM)
-            # times['CRWM'].append(runtime_crwm)
+            start_time_crwm = time.time()
+            sCRWM, _, aCRWM = CRWM(q_inits[chain_ix], manifold, N, B*δ, B, tol=1e-14, rev_tol=1e-14, rng=rngs[chain_ix])
+            runtime_crwm = time.time() - start_time_crwm
+            chains['CRWM'].append(sCRWM)
+            times['CRWM'].append(runtime_crwm)
+            avg_ap['CRWM'] += (aCRWM.mean()/n_chains)
             # Run HMC (on true posterior, not lifted)
-            # neg_log_post = lambda θ: - log_posterior(θ)
-            # grad_neg_log_post = lambda θ: - grad_log_prior(θ) - (y - F(θ))*grad_F(θ) / (σ**2)
-            # hmc_sampler =  HMC(θ_inits[chain_ix], N, eye(2), B*δ, δ)
-            # hmc_sampler.dVdq = grad_neg_log_post
-            # hmc_sampler.neg_log_target = neg_log_post
-            # start_time_hmc = time.time()
-            # sHMC, aHMC = hmc_sampler.sample()
-            # runtime_hmc = time.time() - start_time_hmc
-            # chains['HMC'].append(sHMC)
-            # times['HMC'].append(runtime_hmc)
+            neg_log_post = lambda θ: - log_posterior(θ)
+            grad_neg_log_post = lambda θ: - grad_log_prior(θ) - (y - F(θ))*grad_F(θ) / (σ**2)
+            hmc_sampler =  HMC(θ_inits[chain_ix], N, eye(2), B*δ, δ)
+            hmc_sampler.dVdq = grad_neg_log_post
+            hmc_sampler.neg_log_target = neg_log_post
+            start_time_hmc = time.time()
+            sHMC, aHMC = hmc_sampler.sample()
+            runtime_hmc = time.time() - start_time_hmc
+            chains['HMC'].append(sHMC)
+            times['HMC'].append(runtime_hmc)
+            avg_ap['HMC'] += (aHMC.mean()/n_chains)
         # Compute ESS across chains
-        # THUG_CC[σ_ix] = compute_arviz_miness_runtime(chains['THUG'], times['THUG'])
+        THUG_CC[σ_ix]   = compute_arviz_miness_runtime(chains['THUG'], times['THUG'])
         THUG99_CC[σ_ix] = compute_arviz_miness_runtime(chains['THUG99'], times['THUG99'])
-        # CRWM_CC[σ_ix] = compute_arviz_miness_runtime(chains['CRWM'], times['CRWM'])
-        # HMC_CC[σ_ix]  = compute_arviz_miness_runtime(chains['HMC'], times['HMC'])
+        CRWM_CC[σ_ix]   = compute_arviz_miness_runtime(chains['CRWM'], times['CRWM'])
+        HMC_CC[σ_ix]    = compute_arviz_miness_runtime(chains['HMC'], times['HMC'])
+        # Store average acceptance probability
+        THUG_AP[σ_ix]   = avg_ap['THUG']
+        THUG99_AP[σ_ix] = avg_ap['THUG99']
+        CRWM_AP[σ_ix]   = avg_ap['CRWM']
+        HMC_AP[σ_ix]    = avg_ap['HMC']
 
 
             
@@ -177,11 +193,17 @@ if __name__ == "__main__":
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-    # Save data
-    # save(os.path.join(folder, 'THUG_CC.npy'), THUG_CC)
+    # Save ESS data
+    save(os.path.join(folder, 'THUG_CC.npy'), THUG_CC)
     save(os.path.join(folder, 'THUG99_CC.npy'), THUG99_CC)
-    # save(os.path.join(folder, 'CRWM_CC.npy'), CRWM_CC)
-    # save(os.path.join(folder, 'HMC_CC.npy'), HMC_CC)
+    save(os.path.join(folder, 'CRWM_CC.npy'), CRWM_CC)
+    save(os.path.join(folder, 'HMC_CC.npy'), HMC_CC)
+
+    # Save AP data
+    save(os.path.join(folder, 'THUG_AVG_AP.npy'), THUG_AP)
+    save(os.path.join(folder, 'THUG99_AVG_AP.npy'), THUG99_AP)
+    save(os.path.join(folder, 'CRWM_AVG_AP.npy'), CRWM_AP)
+    save(os.path.join(folder, 'HMC_AVG_AP.npy'), HMC_AP)
 
     # Save noise scales and step sizes
     save(os.path.join(folder, 'SIGMA_GRID_CC.npy'), σ_grid)
