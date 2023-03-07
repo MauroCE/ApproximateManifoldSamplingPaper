@@ -194,7 +194,7 @@ class SMCTHUG:
         raise NotImplementedError
 
     def logkernel(self, ξ):
-        """Kernel used for logpi. Epanechnikov in this case."""
+        """Epanechnikov Approximation to the Identity. Recall dimension of the data is 1."""
         u = self.h(ξ, self.ystar)
         ϵ = self.EPSILON[self.t]
         with errstate(divide='ignore'):
